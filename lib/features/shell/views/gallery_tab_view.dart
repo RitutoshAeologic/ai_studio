@@ -1,8 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:get/get.dart';
+
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/aperture_indicator.dart';
 import '../../../data/models/job_model.dart';
@@ -13,6 +16,7 @@ import '../../jobs/widgets/job_status_chip.dart';
 import '../../mesh/views/mesh_viewer_view.dart';
 
 /// Gallery view tab displaying live history of generated assets.
+/// Responsive layout using ScreenUtil, AppStrings, AppColors, and AppTextStyles per ui_ux.md.
 class GalleryTabView extends StatelessWidget {
   const GalleryTabView({super.key});
 
@@ -23,7 +27,10 @@ class GalleryTabView extends StatelessWidget {
 
     if (userId.isEmpty) {
       return Center(
-        child: Text('Please sign in to view gallery', style: AppTextStyles.bodyMedium(color: AppColors.slate)),
+        child: Text(
+          AppStrings.signInToViewGallery,
+          style: AppTextStyles.bodyMedium(color: AppColors.textMuted),
+        ),
       );
     }
 
@@ -36,13 +43,19 @@ class GalleryTabView extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(
-            child: Text('Failed to load gallery: ${snapshot.error}', style: AppTextStyles.bodySmall(color: AppColors.statusError)),
+            child: Text(
+              '${AppStrings.failedToLoadGallery}${snapshot.error}',
+              style: AppTextStyles.bodySmall(color: AppColors.errorIndicator),
+            ),
           );
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: ApertureIndicator(size: 48, color: AppColors.ember),
+          return Center(
+            child: ApertureIndicator(
+              size: 48.r,
+              color: AppColors.primaryAction,
+            ),
           );
         }
 
@@ -52,13 +65,20 @@ class GalleryTabView extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.photo_library_outlined, size: 56, color: AppColors.slate),
-                const SizedBox(height: 16),
-                Text('No Creations Yet', style: AppTextStyles.headingMedium()),
-                const SizedBox(height: 8),
+                Icon(
+                  Icons.photo_library_outlined,
+                  size: 56.r,
+                  color: AppColors.textMuted,
+                ),
+                SizedBox(height: 16.h),
                 Text(
-                  'Your generated images and 3D models will appear here.',
-                  style: AppTextStyles.bodySmall(color: AppColors.slate),
+                  AppStrings.noCreationsYet,
+                  style: AppTextStyles.headingMedium(),
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  AppStrings.creationsSubtitle,
+                  style: AppTextStyles.bodySmall(color: AppColors.textMuted),
                 ),
               ],
             ),
@@ -69,11 +89,11 @@ class GalleryTabView extends StatelessWidget {
         jobs.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
         return GridView.builder(
-          padding: const EdgeInsets.all(16),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          padding: EdgeInsets.all(16.r),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
+            crossAxisSpacing: 12.w,
+            mainAxisSpacing: 12.h,
             childAspectRatio: 0.85,
           ),
           itemCount: jobs.length,
@@ -99,9 +119,9 @@ class GalleryTabView extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.borderSubtle),
+          color: AppColors.surfaceCard,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: AppColors.borderSubtle, width: 1.r),
         ),
         clipBehavior: Clip.antiAlias,
         child: Stack(
@@ -112,11 +132,18 @@ class GalleryTabView extends StatelessWidget {
                 child: CachedNetworkImage(
                   imageUrl: job.outputUrl!,
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => const Center(
-                    child: ApertureIndicator(size: 28, color: AppColors.ember),
+                  placeholder: (context, url) => Center(
+                    child: ApertureIndicator(
+                      size: 28.r,
+                      color: AppColors.primaryAction,
+                    ),
                   ),
-                  errorWidget: (context, url, error) => const Center(
-                    child: Icon(Icons.broken_image, color: AppColors.slate),
+                  errorWidget: (context, url, error) => Center(
+                    child: Icon(
+                      Icons.broken_image_rounded,
+                      color: AppColors.textMuted,
+                      size: 32.r,
+                    ),
                   ),
                 ),
               )
@@ -127,10 +154,10 @@ class GalleryTabView extends StatelessWidget {
                   child: Center(
                     child: Icon(
                       job.type == JobType.meshGen
-                          ? Icons.view_in_ar
-                          : Icons.auto_awesome,
-                      size: 36,
-                      color: AppColors.slate,
+                          ? Icons.view_in_ar_rounded
+                          : Icons.auto_awesome_rounded,
+                      size: 36.r,
+                      color: AppColors.textMuted,
                     ),
                   ),
                 ),
@@ -138,8 +165,8 @@ class GalleryTabView extends StatelessWidget {
 
             // Top Status Chip Overlay
             Positioned(
-              top: 8,
-              left: 8,
+              top: 8.h,
+              left: 8.w,
               child: JobStatusChip(status: job.status),
             ),
 
@@ -149,13 +176,13 @@ class GalleryTabView extends StatelessWidget {
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                color: AppColors.ink.withAlpha(210),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                color: AppColors.bgApp.withAlpha(220),
                 child: Text(
                   job.type == JobType.meshGen
-                      ? '3D Mesh Model'
-                      : job.params.userPrompt ?? 'AI Creation',
-                  style: AppTextStyles.labelSmall(color: AppColors.bone),
+                      ? AppStrings.meshModelTitle
+                      : job.params.userPrompt ?? AppStrings.aiCreationTitle,
+                  style: AppTextStyles.labelSmall(color: AppColors.textPrimary),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

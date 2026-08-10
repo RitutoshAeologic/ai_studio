@@ -51,7 +51,7 @@ class WalletDebugView extends StatelessWidget {
               SizedBox(width: 8.w),
               Text(
                 AppStrings.walletDebugTitle,
-                style: AppTextStyles.headingM.copyWith(
+                style: AppTextStyles.headingM(
                   color: AppColors.creditGoldTitle,
                   fontWeight: FontWeight.w700,
                 ),
@@ -63,7 +63,7 @@ class WalletDebugView extends StatelessWidget {
           // Raw wallet document inspector
           Text(
             AppStrings.rawWalletDoc,
-            style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+            style: AppTextStyles.caption(color: AppColors.textMuted),
           ),
           SizedBox(height: 8.h),
           Obx(() {
@@ -71,7 +71,7 @@ class WalletDebugView extends StatelessWidget {
             if (w == null) {
               return Text(
                 'null',
-                style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                style: AppTextStyles.caption(color: AppColors.textMuted),
               );
             }
             return Container(
@@ -126,7 +126,7 @@ class WalletDebugView extends StatelessWidget {
                   isAdding.value
                       ? AppStrings.addingCredits
                       : AppStrings.addTestCredits,
-                  style: AppTextStyles.buttonLabel.copyWith(color: Colors.white),
+                  style: AppTextStyles.buttonLabel(color: Colors.white),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryAction,
@@ -146,7 +146,7 @@ class WalletDebugView extends StatelessWidget {
                   padding: EdgeInsets.only(top: 10.h),
                   child: Text(
                     addResult.value,
-                    style: AppTextStyles.caption.copyWith(
+                    style: AppTextStyles.caption(
                       color: addResult.value.startsWith('✓')
                           ? AppColors.creditGoldTitle
                           : AppColors.errorIndicator,
@@ -170,7 +170,7 @@ class WalletDebugView extends StatelessWidget {
         children: [
           Text(
             '$key: ',
-            style: AppTextStyles.caption.copyWith(
+            style: AppTextStyles.caption(
               color: AppColors.textMuted,
               fontWeight: FontWeight.w600,
             ),
@@ -178,7 +178,7 @@ class WalletDebugView extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: AppTextStyles.caption.copyWith(
+              style: AppTextStyles.caption(
                 color: AppColors.textPrimary,
               ),
             ),

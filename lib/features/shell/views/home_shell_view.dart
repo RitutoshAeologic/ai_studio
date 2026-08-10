@@ -7,10 +7,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../generate/views/generation_studio_view.dart';
 import '../../wallet/views/wallet_debug_view.dart';
 import '../widgets/credit_badge_widget.dart';
-
-import '../../generate/views/generation_studio_view.dart';
 import 'gallery_tab_view.dart';
 
 class HomeShellView extends StatefulWidget {
@@ -49,22 +48,23 @@ class _HomeShellViewState extends State<HomeShellView> {
               width: 28.r,
               height: 28.r,
               decoration: const BoxDecoration(
-                color: AppColors.ember,
+                color: AppColors.primaryAction,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.auto_awesome, size: 16.r, color: AppColors.bone),
+              child: Icon(Icons.auto_awesome_rounded,
+                  size: 16.r, color: Colors.white),
             ),
             SizedBox(width: 8.w),
             Text(
               AppStrings.appName,
-              style: AppTextStyles.headingM.copyWith(
+              style: AppTextStyles.headingM(
                 fontWeight: FontWeight.w700,
               ),
             ),
           ],
         ),
         actions: [
-          // Persistent Credit Badge Widget (Task F1.2)
+          // Persistent Credit Badge Widget
           Padding(
             padding: EdgeInsets.only(right: 8.w),
             child: const CreditBadge(),
@@ -74,15 +74,15 @@ class _HomeShellViewState extends State<HomeShellView> {
           if (kDebugMode)
             IconButton(
               icon: Icon(Icons.bug_report_outlined,
-                  color: AppColors.statusWarning, size: 20.r),
+                  color: AppColors.creditGoldIcon, size: 20.r),
               tooltip: AppStrings.walletDebugTitle,
               onPressed: () => WalletDebugView.show(context),
             ),
 
           IconButton(
-            icon: Icon(Icons.logout_outlined,
-                color: AppColors.slate, size: 20.r),
-            tooltip: 'Sign Out',
+            icon: Icon(Icons.logout_rounded,
+                color: AppColors.textMuted, size: 20.r),
+            tooltip: AppStrings.signOut,
             onPressed: () => authCtrl.signOut(),
           ),
           SizedBox(width: 4.w),
@@ -112,11 +112,11 @@ class _HomeShellViewState extends State<HomeShellView> {
           backgroundColor: AppColors.surfaceCard,
           selectedItemColor: AppColors.primaryAction,
           unselectedItemColor: AppColors.textMuted,
-          selectedLabelStyle: AppTextStyles.caption.copyWith(
+          selectedLabelStyle: AppTextStyles.caption(
             fontWeight: FontWeight.w700,
             color: AppColors.primaryAction,
           ),
-          unselectedLabelStyle: AppTextStyles.caption.copyWith(
+          unselectedLabelStyle: AppTextStyles.caption(
             color: AppColors.textMuted,
           ),
           type: BottomNavigationBarType.fixed,
@@ -164,17 +164,17 @@ class _WalletTabPlaceholder extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.account_balance_wallet,
-              size: 48.r, color: AppColors.ember),
+          Icon(Icons.account_balance_wallet_rounded,
+              size: 48.r, color: AppColors.primaryAction),
           SizedBox(height: 16.h),
           Text(
             AppStrings.walletTitle,
-            style: AppTextStyles.headingL,
+            style: AppTextStyles.headingL(),
           ),
           SizedBox(height: 8.h),
           Text(
             AppStrings.walletTabSubtitle,
-            style: AppTextStyles.bodyM.copyWith(color: AppColors.textMuted),
+            style: AppTextStyles.bodyM(color: AppColors.textMuted),
           ),
         ],
       ),
@@ -193,16 +193,16 @@ class _ProfileTabPlaceholder extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.person, size: 48.r, color: AppColors.slate),
+          Icon(Icons.person_rounded, size: 48.r, color: AppColors.textMuted),
           SizedBox(height: 16.h),
           Obx(() => Text(
                 authCtrl.currentUser.value?.displayName ?? AppStrings.userProfile,
-                style: AppTextStyles.headingL,
+                style: AppTextStyles.headingL(),
               )),
           SizedBox(height: 4.h),
           Obx(() => Text(
                 authCtrl.currentUser.value?.email ?? '',
-                style: AppTextStyles.bodyM.copyWith(color: AppColors.textMuted),
+                style: AppTextStyles.bodyM(color: AppColors.textMuted),
               )),
         ],
       ),

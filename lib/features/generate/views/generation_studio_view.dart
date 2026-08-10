@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/preset_themes.dart';
 import '../../../core/services/api_service.dart';
@@ -17,6 +20,7 @@ import '../../mesh/views/mesh_viewer_view.dart';
 
 /// Task F2.1 — Generation Studio Canvas
 /// Interactive editor screen powering the Generate tab in HomeShellView.
+/// Responsive layout using ScreenUtil, AppStrings, AppColors, and AppTextStyles per ui_ux.md.
 class GenerationStudioView extends StatefulWidget {
   const GenerationStudioView({super.key});
 
@@ -45,7 +49,6 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
   void _selectMode(JobType type) {
     setState(() {
       _selectedJobType = type;
-      // BG_REMOVAL doesn't need prompt or theme
       if (type == JobType.bgRemoval) {
         _selectedThemeId = null;
       }
@@ -97,8 +100,11 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Image upload failed: ${failure.message}'),
-              backgroundColor: AppColors.statusError,
+              content: Text(
+                '${AppStrings.imageUploadFailedNotice}${failure.message}',
+                style: AppTextStyles.bodyM(color: Colors.white),
+              ),
+              backgroundColor: AppColors.errorIndicator,
             ),
           );
         }
@@ -116,28 +122,36 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
   Future<void> _submitJob() async {
     final jobCtrl = Get.find<JobController>();
 
-    // Validate requirements per job type
-    if (_selectedJobType == JobType.bgRemoval && _uploadedImageUrl == null && _selectedImageFile == null) {
+    if (_selectedJobType == JobType.bgRemoval &&
+        _uploadedImageUrl == null &&
+        _selectedImageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select an input image for background removal.'),
-          backgroundColor: AppColors.statusWarning,
+        SnackBar(
+          content: Text(
+            AppStrings.selectInputImageBgRemovalNotice,
+            style: AppTextStyles.bodyM(color: AppColors.creditGoldTitle),
+          ),
+          backgroundColor: AppColors.creditGoldBg,
         ),
       );
       return;
     }
 
-    if (_isUsingCustomPrompt && _promptCtrl.text.trim().isEmpty && _selectedJobType != JobType.bgRemoval) {
+    if (_isUsingCustomPrompt &&
+        _promptCtrl.text.trim().isEmpty &&
+        _selectedJobType != JobType.bgRemoval) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a description or pick a theme preset.'),
-          backgroundColor: AppColors.statusWarning,
+        SnackBar(
+          content: Text(
+            AppStrings.enterDescriptionNotice,
+            style: AppTextStyles.bodyM(color: AppColors.creditGoldTitle),
+          ),
+          backgroundColor: AppColors.creditGoldBg,
         ),
       );
       return;
     }
 
-    // Build payload matching server schema requirements
     final params = JobParams(
       userPrompt: _isUsingCustomPrompt && _promptCtrl.text.trim().isNotEmpty
           ? _promptCtrl.text.trim()
@@ -163,79 +177,118 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
     final jobCtrl = Get.find<JobController>();
 
     return Scaffold(
-      backgroundColor: AppColors.ink,
+      backgroundColor: AppColors.bgApp,
       body: SafeArea(
         child: Stack(
           children: [
             SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Mode Selection Bar ─────────────────────────────────────
-                  Text('STUDIO MODE', style: AppTextStyles.labelSmall(color: AppColors.slate)),
-                  const SizedBox(height: 8),
+                  // Mode Selection Bar
+                  Text(
+                    AppStrings.studioMode,
+                    style: AppTextStyles.labelSmall(color: AppColors.textMuted),
+                  ),
+                  SizedBox(height: 8.h),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _buildModeChip(JobType.imageGen, 'Image Gen', Icons.auto_awesome),
-                        const SizedBox(width: 8),
-                        _buildModeChip(JobType.meshGen, '3D Mesh', Icons.view_in_ar),
-                        const SizedBox(width: 8),
-                        _buildModeChip(JobType.bgRemoval, 'BG Removal', Icons.content_cut),
-                        const SizedBox(width: 8),
-                        _buildModeChip(JobType.themeChange, 'Theme Change', Icons.style),
+                        _buildModeChip(
+                          JobType.imageGen,
+                          AppStrings.imageGenTab,
+                          Icons.auto_awesome_rounded,
+                        ),
+                        SizedBox(width: 8.w),
+                        _buildModeChip(
+                          JobType.meshGen,
+                          AppStrings.mesh3dTab,
+                          Icons.view_in_ar_rounded,
+                        ),
+                        SizedBox(width: 8.w),
+                        _buildModeChip(
+                          JobType.bgRemoval,
+                          AppStrings.bgRemovalTab,
+                          Icons.content_cut_rounded,
+                        ),
+                        SizedBox(width: 8.w),
+                        _buildModeChip(
+                          JobType.themeChange,
+                          AppStrings.themeChangeTab,
+                          Icons.style_rounded,
+                        ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24.h),
 
-                  // ── Image Input Picker Section ─────────────────────────────
+                  // Image Input Picker Section
                   if (_selectedJobType == JobType.bgRemoval ||
                       _selectedJobType == JobType.themeChange ||
                       _selectedJobType == JobType.imageGen) ...[
                     Row(
                       children: [
-                        Text('INPUT IMAGE', style: AppTextStyles.labelSmall(color: AppColors.slate)),
+                        Text(
+                          AppStrings.inputImageLabel,
+                          style: AppTextStyles.labelSmall(
+                            color: AppColors.textMuted,
+                          ),
+                        ),
                         if (_selectedJobType == JobType.bgRemoval)
-                          Text(' (REQUIRED)', style: AppTextStyles.labelSmall(color: AppColors.ember)),
+                          Text(
+                            AppStrings.requiredTag,
+                            style: AppTextStyles.labelSmall(
+                              color: AppColors.primaryAction,
+                            ),
+                          ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8.h),
                     _buildImagePickerBox(),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24.h),
                   ],
 
-                  // ── Prompt / Theme Section ──────────────────────────────────
+                  // Prompt & Theme Section
                   if (_selectedJobType != JobType.bgRemoval) ...[
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('PROMPT & THEME', style: AppTextStyles.labelSmall(color: AppColors.slate)),
+                        Text(
+                          AppStrings.promptAndThemeLabel,
+                          style: AppTextStyles.labelSmall(
+                            color: AppColors.textMuted,
+                          ),
+                        ),
                         Row(
                           children: [
                             GestureDetector(
                               onTap: _switchToCustomPrompt,
                               child: Text(
-                                'Custom Prompt',
+                                AppStrings.customPromptTab,
                                 style: AppTextStyles.labelSmall(
-                                  color: _isUsingCustomPrompt ? AppColors.ember : AppColors.slate,
+                                  color: _isUsingCustomPrompt
+                                      ? AppColors.primaryAction
+                                      : AppColors.textMuted,
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12.w),
                             GestureDetector(
                               onTap: () {
-                                if (_selectedThemeId == null && PresetThemes.list.isNotEmpty) {
+                                if (_selectedThemeId == null &&
+                                    PresetThemes.list.isNotEmpty) {
                                   _selectTheme(PresetThemes.list.first.themeId);
                                 }
                               },
                               child: Text(
-                                'Preset Grid',
+                                AppStrings.presetGridTab,
                                 style: AppTextStyles.labelSmall(
-                                  color: !_isUsingCustomPrompt ? AppColors.ember : AppColors.slate,
+                                  color: !_isUsingCustomPrompt
+                                      ? AppColors.primaryAction
+                                      : AppColors.textMuted,
                                 ),
                               ),
                             ),
@@ -243,27 +296,34 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8.h),
 
                     if (_isUsingCustomPrompt) ...[
                       // Custom Prompt Input
                       Container(
                         decoration: BoxDecoration(
                           color: AppColors.surfaceInput,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.borderSubtle),
+                          borderRadius: BorderRadius.circular(12.r),
+                          border: Border.all(
+                            color: AppColors.borderSubtle,
+                            width: 1.r,
+                          ),
                         ),
                         child: TextField(
                           controller: _promptCtrl,
                           maxLines: 4,
-                          style: AppTextStyles.bodyMedium(),
+                          style: AppTextStyles.bodyM(
+                            color: AppColors.textPrimary,
+                          ),
                           decoration: InputDecoration(
                             hintText: _selectedJobType == JobType.meshGen
-                                ? 'Describe the 3D model you want to generate (e.g., "A futuristic cyberpunk helmet with glowing visor")...'
-                                : 'Describe what you want to create or modify...',
-                            hintStyle: AppTextStyles.bodyMedium(color: AppColors.textDisabled),
+                                ? AppStrings.meshPromptHint
+                                : AppStrings.genPromptHint,
+                            hintStyle: AppTextStyles.bodyM(
+                              color: AppColors.textDisabled,
+                            ),
                             border: InputBorder.none,
-                            contentPadding: const EdgeInsets.all(14),
+                            contentPadding: EdgeInsets.all(14.r),
                           ),
                         ),
                       ),
@@ -272,54 +332,68 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                           childAspectRatio: 2.2,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10.w,
+                          mainAxisSpacing: 10.h,
                         ),
                         itemCount: PresetThemes.list.length,
                         itemBuilder: (context, index) {
                           final theme = PresetThemes.list[index];
-                          final isSelected = _selectedThemeId == theme.themeId;
+                          final isSelected =
+                              _selectedThemeId == theme.themeId;
 
                           return GestureDetector(
                             onTap: () => _selectTheme(theme.themeId),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.all(10),
+                              padding: EdgeInsets.all(10.r),
                               decoration: BoxDecoration(
-                                color: isSelected ? AppColors.emberSoft : AppColors.surface,
-                                borderRadius: BorderRadius.circular(10),
+                                color: isSelected
+                                    ? AppColors.accentGlowSoft
+                                    : AppColors.surfaceCard,
+                                borderRadius: BorderRadius.circular(10.r),
                                 border: Border.all(
-                                  color: isSelected ? AppColors.ember : AppColors.borderSubtle,
-                                  width: isSelected ? 1.5 : 1,
+                                  color: isSelected
+                                      ? AppColors.primaryAction
+                                      : AppColors.borderSubtle,
+                                  width: isSelected ? 1.5.r : 1.r,
                                 ),
                               ),
                               child: Row(
                                 children: [
                                   Icon(
                                     theme.icon,
-                                    color: isSelected ? AppColors.ember : AppColors.slate,
-                                    size: 20,
+                                    color: isSelected
+                                        ? AppColors.primaryAction
+                                        : AppColors.textMuted,
+                                    size: 20.r,
                                   ),
-                                  const SizedBox(width: 8),
+                                  SizedBox(width: 8.w),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Text(
                                           theme.title,
                                           style: AppTextStyles.labelMedium(
-                                            color: isSelected ? AppColors.ember : AppColors.bone,
+                                            color: isSelected
+                                                ? AppColors.primaryAction
+                                                : AppColors.textPrimary,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                         Text(
                                           theme.category,
-                                          style: AppTextStyles.bodySmall(color: AppColors.slate),
+                                          style: AppTextStyles.bodySmall(
+                                            color: AppColors.textMuted,
+                                          ),
                                           maxLines: 1,
                                         ),
                                       ],
@@ -334,32 +408,40 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
                     ],
                   ],
 
-                  const SizedBox(height: 32),
+                  SizedBox(height: 32.h),
 
-                  // ── Generate Action Button ─────────────────────────────────
+                  // Generate Action Button
                   Obx(() {
                     final cost = jobCtrl.lastJobCost.value;
-                    final isBusy = jobCtrl.isSubmitting.value || jobCtrl.isProcessing.value || _isUploadingImage;
+                    final isBusy = jobCtrl.isSubmitting.value ||
+                        jobCtrl.isProcessing.value ||
+                        _isUploadingImage;
 
                     return Column(
                       children: [
                         AppButton(
                           label: _isUploadingImage
-                              ? 'Uploading Image...'
-                              : 'Generate Creation',
+                              ? AppStrings.uploadingImageEllipsis
+                              : AppStrings.generateCreation,
                           isLoading: isBusy,
                           onPressed: isBusy ? null : _submitJob,
                         ),
                         if (cost > 0) ...[
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8.h),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.bolt_rounded, size: 14, color: AppColors.ember),
-                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.bolt_rounded,
+                                size: 14.r,
+                                color: AppColors.creditGoldIcon,
+                              ),
+                              SizedBox(width: 4.w),
                               Text(
-                                'Estimated cost: $cost credits (Fast Tier)',
-                                style: AppTextStyles.bodySmall(color: AppColors.slate),
+                                '${AppStrings.estimatedCostPrefix}$cost${AppStrings.estimatedCostSuffix}',
+                                style: AppTextStyles.bodySmall(
+                                  color: AppColors.textMuted,
+                                ),
                               ),
                             ],
                           ),
@@ -368,41 +450,48 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
                     );
                   }),
 
-                  const SizedBox(height: 32),
+                  SizedBox(height: 32.h),
                 ],
               ),
             ),
 
-            // ── Realtime Job Status Processing Overlay ───────────────────────
+            // Realtime Job Status Processing Overlay
             Obx(() {
               final status = jobCtrl.status.value;
               final errorMsg = jobCtrl.jobError.value;
 
               if (status.isActive || jobCtrl.isSubmitting.value) {
                 return Container(
-                  color: AppColors.ink.withAlpha(235),
+                  color: AppColors.bgApp.withAlpha(235),
                   child: Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(24),
+                      padding: EdgeInsets.all(24.r),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const ApertureIndicator(size: 64, color: AppColors.ember),
-                          const SizedBox(height: 24),
+                          ApertureIndicator(
+                            size: 64.r,
+                            color: AppColors.primaryAction,
+                          ),
+                          SizedBox(height: 24.h),
                           Text(
                             status == JobStatus.pending
-                                ? 'Initializing Job...'
+                                ? AppStrings.initializingJob
                                 : status == JobStatus.deductingCredits
-                                    ? 'Verifying Credits...'
+                                    ? AppStrings.verifyingCredits
                                     : status == JobStatus.queued
-                                        ? 'Queued on Studio Server...'
-                                        : 'Processing Creation...',
-                            style: AppTextStyles.headingSmall(),
+                                        ? AppStrings.queuedOnServer
+                                        : AppStrings.processingCreation,
+                            style: AppTextStyles.headingSmall(
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8.h),
                           Text(
-                            'Generative AI models at work — please hold on',
-                            style: AppTextStyles.bodySmall(color: AppColors.slate),
+                            AppStrings.generativeAiWorkingNotice,
+                            style: AppTextStyles.bodySmall(
+                              color: AppColors.textMuted,
+                            ),
                           ),
                         ],
                       ),
@@ -414,15 +503,18 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
               // Terminal Error State Notification
               if (jobCtrl.isError.value && errorMsg.isNotEmpty) {
                 return Positioned(
-                  bottom: 20,
-                  left: 20,
-                  right: 20,
+                  bottom: 20.h,
+                  left: 20.w,
+                  right: 20.w,
                   child: Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(16.r),
                     decoration: BoxDecoration(
-                      color: AppColors.statusErrorSoft,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.statusError),
+                      color: AppColors.errorIndicatorSoft,
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color: AppColors.errorIndicator,
+                        width: 1.r,
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -430,20 +522,36 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.error_outline, color: AppColors.statusError, size: 20),
-                            const SizedBox(width: 8),
-                            Text('Generation Error', style: AppTextStyles.headingSmall(color: AppColors.statusError)),
+                            Icon(
+                              Icons.error_outline_rounded,
+                              color: AppColors.errorIndicator,
+                              size: 20.r,
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              AppStrings.generationErrorTitle,
+                              style: AppTextStyles.headingSmall(
+                                color: AppColors.errorIndicator,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                             const Spacer(),
                             IconButton(
-                              icon: const Icon(Icons.close, color: AppColors.statusError, size: 18),
+                              icon: Icon(
+                                Icons.close_rounded,
+                                color: AppColors.errorIndicator,
+                                size: 18.r,
+                              ),
                               onPressed: () => jobCtrl.stopWatching(),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6.h),
                         Text(
                           errorMsg,
-                          style: AppTextStyles.bodySmall(color: AppColors.statusError),
+                          style: AppTextStyles.bodySmall(
+                            color: AppColors.errorIndicator,
+                          ),
                         ),
                       ],
                     ),
@@ -481,26 +589,32 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
       onTap: () => _selectMode(type),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.ember : AppColors.surface,
-          borderRadius: BorderRadius.circular(10),
+          color: isSelected
+              ? AppColors.primaryAction
+              : AppColors.surfaceCard,
+          borderRadius: BorderRadius.circular(10.r),
           border: Border.all(
-            color: isSelected ? AppColors.ember : AppColors.borderSubtle,
+            color: isSelected
+                ? AppColors.primaryAction
+                : AppColors.borderSubtle,
+            width: 1.r,
           ),
         ),
         child: Row(
           children: [
             Icon(
               icon,
-              size: 16,
-              color: isSelected ? AppColors.bone : AppColors.slate,
+              size: 16.r,
+              color: isSelected ? Colors.white : AppColors.textMuted,
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: 6.w),
             Text(
               label,
               style: AppTextStyles.labelMedium(
-                color: isSelected ? AppColors.bone : AppColors.slate,
+                color: isSelected ? Colors.white : AppColors.textMuted,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               ),
             ),
           ],
@@ -514,11 +628,14 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
       return Stack(
         children: [
           Container(
-            height: 160,
+            height: 160.h,
             width: double.infinity,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.ember),
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(
+                color: AppColors.primaryAction,
+                width: 1.5.r,
+              ),
               image: DecorationImage(
                 image: FileImage(_selectedImageFile!),
                 fit: BoxFit.cover,
@@ -529,23 +646,29 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.ink.withAlpha(180),
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.bgApp.withAlpha(180),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: const Center(
-                  child: CircularProgressIndicator(color: AppColors.ember),
+                  child: CircularProgressIndicator(
+                    color: AppColors.primaryAction,
+                  ),
                 ),
               ),
             ),
           Positioned(
-            top: 8,
-            right: 8,
+            top: 8.h,
+            right: 8.w,
             child: CircleAvatar(
-              backgroundColor: AppColors.ink,
-              radius: 16,
+              backgroundColor: AppColors.bgApp,
+              radius: 16.r,
               child: IconButton(
                 padding: EdgeInsets.zero,
-                icon: const Icon(Icons.close, size: 16, color: AppColors.bone),
+                icon: Icon(
+                  Icons.close_rounded,
+                  size: 16.r,
+                  color: AppColors.textPrimary,
+                ),
                 onPressed: _clearSelectedImage,
               ),
             ),
@@ -555,43 +678,67 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
     }
 
     return Container(
-      height: 120,
+      height: 120.h,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderSubtle, style: BorderStyle.solid),
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.borderSubtle, width: 1.r),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           InkWell(
             onTap: () => _pickInputImage(ImageSource.gallery),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(8.r),
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12.r),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.photo_library_outlined, color: AppColors.ember, size: 28),
-                  const SizedBox(height: 6),
-                  Text('Pick from Gallery', style: AppTextStyles.labelMedium(color: AppColors.bone)),
+                  Icon(
+                    Icons.photo_library_outlined,
+                    color: AppColors.primaryAction,
+                    size: 28.r,
+                  ),
+                  SizedBox(height: 6.h),
+                  Text(
+                    AppStrings.pickFromGallery,
+                    style: AppTextStyles.labelMedium(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
-          Container(width: 1, height: 40, color: AppColors.borderSubtle),
+          Container(
+            width: 1.w,
+            height: 40.h,
+            color: AppColors.borderSubtle,
+          ),
           InkWell(
             onTap: () => _pickInputImage(ImageSource.camera),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(8.r),
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12.r),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.camera_alt_outlined, color: AppColors.ember, size: 28),
-                  const SizedBox(height: 6),
-                  Text('Take Photo', style: AppTextStyles.labelMedium(color: AppColors.bone)),
+                  Icon(
+                    Icons.camera_alt_outlined,
+                    color: AppColors.primaryAction,
+                    size: 28.r,
+                  ),
+                  SizedBox(height: 6.h),
+                  Text(
+                    AppStrings.takePhoto,
+                    style: AppTextStyles.labelMedium(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -87,3 +87,4 @@ This document records essential architectural decisions, system configurations, 
    - Every dimension, padding, border radius, and icon size uses `.w`, `.h`, `.r` extensions.
    - 100% of user-facing strings are defined in `AppStrings` (`lib/core/constants/app_strings.dart`). Zero raw inline strings exist in views or widgets.
    - All colors are mapped to `AppColors` tokens.
+   - **`AppTextStyles` Parameter Factory Pattern**: Typography styles use direct parameter functions (`AppTextStyles.bodyMedium(color: AppColors.textMuted)`, `AppTextStyles.caption(color: AppColors.errorIndicator)`) rather than `.copyWith(...)` to avoid double-allocation overhead per rebuild frame.

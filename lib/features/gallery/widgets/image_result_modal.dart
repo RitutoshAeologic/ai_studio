@@ -1,15 +1,19 @@
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:gal/gal.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/aperture_indicator.dart';
 
 /// Fullscreen high-resolution result viewer for image outputs (IMAGE_GEN / BG_REMOVAL / THEME_CHANGE).
+/// Responsive layout using ScreenUtil, AppStrings, AppColors, and AppTextStyles per ui_ux.md.
 class ImageResultModal extends StatefulWidget {
   final String imageUrl;
   final String? title;
@@ -22,12 +26,21 @@ class ImageResultModal extends StatefulWidget {
     this.jobId,
   });
 
-  static void show(BuildContext context, {required String imageUrl, String? title, String? jobId}) {
+  static void show(
+    BuildContext context, {
+    required String imageUrl,
+    String? title,
+    String? jobId,
+  }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ImageResultModal(imageUrl: imageUrl, title: title, jobId: jobId),
+      builder: (_) => ImageResultModal(
+        imageUrl: imageUrl,
+        title: title,
+        jobId: jobId,
+      ),
     );
   }
 
@@ -44,7 +57,9 @@ class _ImageResultModalState extends State<ImageResultModal> {
       final response = await http.get(Uri.parse(widget.imageUrl));
       if (response.statusCode == 200) {
         final tempDir = await getTemporaryDirectory();
-        final file = File('${tempDir.path}/ai_studio_${DateTime.now().millisecondsSinceEpoch}.jpg');
+        final file = File(
+          '${tempDir.path}/ai_studio_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        );
         await file.writeAsBytes(response.bodyBytes);
         return file;
       }
@@ -62,9 +77,12 @@ class _ImageResultModalState extends State<ImageResultModal> {
         await Gal.putImage(file.path);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Saved to Gallery!'),
-              backgroundColor: AppColors.statusSuccess,
+            SnackBar(
+              content: Text(
+                AppStrings.savedToGallery,
+                style: AppTextStyles.bodyM(color: Colors.white),
+              ),
+              backgroundColor: AppColors.successIndicator,
             ),
           );
         }
@@ -73,8 +91,11 @@ class _ImageResultModalState extends State<ImageResultModal> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Save failed: $e'),
-            backgroundColor: AppColors.statusError,
+            content: Text(
+              '${AppStrings.saveFailed}$e',
+              style: AppTextStyles.bodyM(color: Colors.white),
+            ),
+            backgroundColor: AppColors.errorIndicator,
           ),
         );
       }
@@ -91,15 +112,18 @@ class _ImageResultModalState extends State<ImageResultModal> {
         // ignore: deprecated_member_use
         await Share.shareXFiles(
           [XFile(file.path)],
-          text: 'Created with AI Studio',
+          text: AppStrings.createdWithAiStudio,
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Share failed: $e'),
-            backgroundColor: AppColors.statusError,
+            content: Text(
+              '${AppStrings.shareFailed}$e',
+              style: AppTextStyles.bodyM(color: Colors.white),
+            ),
+            backgroundColor: AppColors.errorIndicator,
           ),
         );
       }
@@ -112,27 +136,35 @@ class _ImageResultModalState extends State<ImageResultModal> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.88,
-      decoration: const BoxDecoration(
-        color: AppColors.ink,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: AppColors.bgApp,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       child: Column(
         children: [
           // ── Header Bar ─────────────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.borderSubtle)),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: AppColors.borderSubtle, width: 1.r),
+              ),
             ),
             child: Row(
               children: [
                 Text(
-                  widget.title ?? 'Generated Result',
-                  style: AppTextStyles.headingSmall(),
+                  widget.title ?? AppStrings.generatedResult,
+                  style: AppTextStyles.headingS(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.close, color: AppColors.slate),
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: AppColors.textMuted,
+                    size: 20.r,
+                  ),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
@@ -142,20 +174,27 @@ class _ImageResultModalState extends State<ImageResultModal> {
           // ── Main Image View ────────────────────────────────────────────────
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16.r),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.r),
                 child: InteractiveViewer(
                   minScale: 0.8,
                   maxScale: 4.0,
                   child: CachedNetworkImage(
                     imageUrl: widget.imageUrl,
                     fit: BoxFit.contain,
-                    placeholder: (context, url) => const Center(
-                      child: ApertureIndicator(size: 48, color: AppColors.ember),
+                    placeholder: (context, url) => Center(
+                      child: ApertureIndicator(
+                        size: 48.r,
+                        color: AppColors.primaryAction,
+                      ),
                     ),
-                    errorWidget: (context, url, error) => const Center(
-                      child: Icon(Icons.broken_image_outlined, color: AppColors.statusError, size: 48),
+                    errorWidget: (context, url, error) => Center(
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        color: AppColors.errorIndicator,
+                        size: 48.r,
+                      ),
                     ),
                   ),
                 ),
@@ -165,10 +204,12 @@ class _ImageResultModalState extends State<ImageResultModal> {
 
           // ── Action Buttons ──────────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              border: Border(top: BorderSide(color: AppColors.borderSubtle)),
+            padding: EdgeInsets.all(20.r),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceCard,
+              border: Border(
+                top: BorderSide(color: AppColors.borderSubtle, width: 1.r),
+              ),
             ),
             child: Row(
               children: [
@@ -176,42 +217,74 @@ class _ImageResultModalState extends State<ImageResultModal> {
                   child: OutlinedButton.icon(
                     onPressed: _isSaving ? null : _saveToGallery,
                     icon: _isSaving
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.ember),
+                        ? SizedBox(
+                            width: 18.r,
+                            height: 18.r,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.r,
+                              color: AppColors.primaryAction,
+                            ),
                           )
-                        : const Icon(Icons.file_download_outlined, color: AppColors.ember),
+                        : Icon(
+                            Icons.file_download_outlined,
+                            color: AppColors.primaryAction,
+                            size: 18.r,
+                          ),
                     label: Text(
-                      _isSaving ? 'Saving...' : 'Save to Gallery',
-                      style: AppTextStyles.labelMedium(color: AppColors.ember),
+                      _isSaving
+                          ? AppStrings.savingEllipsis
+                          : AppStrings.saveToGallery,
+                      style: AppTextStyles.labelMedium(
+                        color: AppColors.primaryAction,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: AppColors.ember),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      side: BorderSide(
+                        color: AppColors.primaryAction,
+                        width: 1.5.r,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12.w),
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: _isSharing ? null : _shareImage,
                     icon: _isSharing
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.bone),
+                        ? SizedBox(
+                            width: 18.r,
+                            height: 18.r,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.r,
+                              color: Colors.white,
+                            ),
                           )
-                        : const Icon(Icons.share_outlined, color: AppColors.bone),
+                        : Icon(
+                            Icons.share_outlined,
+                            color: Colors.white,
+                            size: 18.r,
+                          ),
                     label: Text(
-                      _isSharing ? 'Sharing...' : 'Share',
-                      style: AppTextStyles.buttonLabel(),
+                      _isSharing
+                          ? AppStrings.sharingEllipsis
+                          : AppStrings.share,
+                      style: AppTextStyles.buttonLabel(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.ember,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      backgroundColor: AppColors.primaryAction,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
                     ),
                   ),
                 ),

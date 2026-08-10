@@ -62,12 +62,77 @@ abstract class AppStrings {
   static const String tabWallet = 'Wallet';
   static const String tabProfile = 'Profile';
 
+  // Generation Studio Strings
+  static const String studioMode = 'STUDIO MODE';
+  static const String imageGenTab = 'Image Gen';
+  static const String mesh3dTab = '3D Mesh';
+  static const String bgRemovalTab = 'BG Removal';
+  static const String themeChangeTab = 'Theme Change';
+  static const String inputImageLabel = 'INPUT IMAGE';
+  static const String requiredTag = ' (REQUIRED)';
+  static const String promptAndThemeLabel = 'PROMPT & THEME';
+  static const String customPromptTab = 'Custom Prompt';
+  static const String presetGridTab = 'Preset Grid';
+  static const String meshPromptHint =
+      'Describe the 3D model you want to generate (e.g., "A futuristic cyberpunk helmet with glowing visor")…';
+  static const String genPromptHint =
+      'Describe what you want to create or modify…';
+  static const String uploadingImageEllipsis = 'Uploading Image…';
+  static const String generateCreation = 'Generate Creation';
+  static const String estimatedCostPrefix = 'Estimated cost: ';
+  static const String estimatedCostSuffix = ' credits (Fast Tier)';
+  static const String initializingJob = 'Initializing Job…';
+  static const String verifyingCredits = 'Verifying Credits…';
+  static const String queuedOnServer = 'Queued on Studio Server…';
+  static const String processingCreation = 'Processing Creation…';
+  static const String generativeAiWorkingNotice =
+      'Generative AI models at work — please hold on';
+  static const String generationErrorTitle = 'Generation Error';
+  static const String pickFromGallery = 'Pick from Gallery';
+  static const String takePhoto = 'Take Photo';
+  static const String selectInputImageBgRemovalNotice =
+      'Please select an input image for background removal.';
+  static const String enterDescriptionNotice =
+      'Please enter a description or pick a theme preset.';
+  static const String imageUploadFailedNotice = 'Image upload failed: ';
+
+  // 3D Mesh Viewer Strings
+  static const String tag3dMesh = '3D MESH';
+  static const String resetCamera = 'Reset Camera';
+  static const String loading3dAsset = 'Loading 3D Asset…';
+  static const String fetchingGlbMeshDataPrefix = 'Fetching .glb mesh data (';
+  static const String dragToRotate = 'Drag to Rotate';
+  static const String pinchToZoom = 'Pinch to Zoom';
+
+  // Gallery Tab Strings
+  static const String signInToViewGallery = 'Please sign in to view gallery';
+  static const String noCreationsYet = 'No Creations Yet';
+  static const String creationsSubtitle =
+      'Your generated images and 3D models will appear here.';
+  static const String meshModelTitle = '3D Mesh Model';
+  static const String aiCreationTitle = 'AI Creation';
+  static const String failedToLoadGallery = 'Failed to load gallery: ';
+
+  // Modal & Gallery Actions
+  static const String savedToGallery = 'Saved to gallery!';
+  static const String saveFailed = 'Save failed: ';
+  static const String createdWithAiStudio = 'Created with AI Studio';
+  static const String shareFailed = 'Share failed: ';
+  static const String generatedResult = 'Generated Result';
+  static const String savingEllipsis = 'Saving…';
+  static const String saveToGallery = 'Save to Gallery';
+  static const String sharingEllipsis = 'Sharing…';
+  static const String share = 'Share';
+
   // Placeholders & Meta
   static const String generationCanvasTitle = 'Generation Studio Canvas';
-  static const String generationCanvasSubtitle = 'Editor Canvas & Preset Library';
-  static const String galleryTabSubtitle = 'Your generated images and 3D models';
+  static const String generationCanvasSubtitle =
+      'Editor Canvas & Preset Library';
+  static const String galleryTabSubtitle =
+      'Your generated images and 3D models';
   static const String walletTitle = 'Wallet & Credits';
-  static const String walletTabSubtitle = 'Credit balance and transaction history';
+  static const String walletTabSubtitle =
+      'Credit balance and transaction history';
   static const String userProfile = 'User Profile';
   static const String walletDebugTitle = 'Wallet Inspector (Debug)';
   static const String rawWalletDoc = 'Raw Wallet Document';

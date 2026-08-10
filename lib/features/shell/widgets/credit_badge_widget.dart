@@ -57,7 +57,7 @@ class CreditBadge extends StatelessWidget {
                 child: Text(
                   key: ValueKey(balance),
                   '${balance ?? 0}',
-                  style: AppTextStyles.buttonLabel.copyWith(
+                  style: AppTextStyles.buttonLabel(
                     color: AppColors.creditGoldTitle,
                     fontWeight: FontWeight.w700,
                   ),

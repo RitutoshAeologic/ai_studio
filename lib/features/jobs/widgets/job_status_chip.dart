@@ -88,7 +88,7 @@ class _JobStatusChipState extends State<JobStatusChip>
           SizedBox(width: 5.w),
           Text(
             widget.status.firestoreValue,
-            style: AppTextStyles.caption.copyWith(
+            style: AppTextStyles.caption(
               color: _chipColor,
               fontWeight: FontWeight.w600,
             ),

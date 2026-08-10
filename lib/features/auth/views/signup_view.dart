@@ -198,20 +198,26 @@ class SignupView extends GetView<AuthController> {
 
               // ── Sign In Link ──────────────────────────────────────────────
               Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Text(AppStrings.alreadyHaveAccount,
-                        style:
-                            AppTextStyles.bodyMedium(color: AppColors.slate)),
+                    Text(
+                      AppStrings.alreadyHaveAccount,
+                      style: AppTextStyles.bodyM(),
+                    ),
                     GestureDetector(
                       onTap: () {
                         controller.resetFormAndErrors();
                         Get.back();
                       },
-                      child: Text(AppStrings.signInLink,
-                          style: AppTextStyles.bodyMedium(
-                              color: AppColors.ember)),
+                      child: Text(
+                        AppStrings.signInLink,
+                        style: AppTextStyles.bodyM(
+                          color: AppColors.primaryAction,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ],
                 ),

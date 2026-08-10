@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
-import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 
 import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
@@ -84,7 +83,7 @@ class _AppTextFieldState extends State<AppTextField> {
       children: [
         Text(
           widget.label,
-          style: AppTextStyles.caption.copyWith(
+          style: AppTextStyles.caption(
             fontWeight: FontWeight.w600,
             color: _hasFocus ? AppColors.primaryAction : AppColors.textMuted,
           ),
@@ -167,7 +166,7 @@ class _AppTextFieldState extends State<AppTextField> {
                       Expanded(
                         child: Text(
                           widget.errorText!,
-                          style: AppTextStyles.caption.copyWith(
+                          style: AppTextStyles.caption(
                             color: AppColors.errorIndicator,
                             fontWeight: FontWeight.w500,
                           ),

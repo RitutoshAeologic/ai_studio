@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:get/get.dart';
+import '../../../app/routes/app_routes.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -161,21 +162,25 @@ class LoginView extends GetView<AuthController> {
 
               // ── Sign Up Link ──────────────────────────────────────────────
               Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(AppStrings.dontHaveAccount,
                         style:
                             AppTextStyles.bodyMedium(color: AppColors.slate)),
                     GestureDetector(
                       onTap: () {
-                        // Clear login errors before going to sign up
                         controller.resetFormAndErrors();
-                        Get.toNamed('/signup');
+                        Get.toNamed(AppRoutes.signup);
                       },
-                      child: Text(AppStrings.createOne,
-                          style: AppTextStyles.bodyMedium(
-                              color: AppColors.ember)),
+                      child: Text(
+                        AppStrings.createOne,
+                        style: AppTextStyles.bodyM(
+                          color: AppColors.primaryAction,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ],
                 ),

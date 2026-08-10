@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:o3d/o3d.dart';
+
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/aperture_indicator.dart';
 
 /// Interactive 3D Mesh Renderer modal utilizing `o3d` for rendering .glb mesh files.
+/// Responsive layout using ScreenUtil, AppStrings, AppColors, and AppTextStyles per ui_ux.md.
 class MeshViewerModal extends StatefulWidget {
   final String meshUrl;
   final String? title;
@@ -15,7 +19,11 @@ class MeshViewerModal extends StatefulWidget {
     this.title,
   });
 
-  static void show(BuildContext context, {required String meshUrl, String? title}) {
+  static void show(
+    BuildContext context, {
+    required String meshUrl,
+    String? title,
+  }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -50,51 +58,75 @@ class _MeshViewerModalState extends State<MeshViewerModal> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.88,
-      decoration: const BoxDecoration(
-        color: AppColors.ink,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: AppColors.bgApp,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       child: Column(
         children: [
           // ── Header Bar ─────────────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.borderSubtle)),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: AppColors.borderSubtle, width: 1.r),
+              ),
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                   decoration: BoxDecoration(
-                    color: AppColors.signalViolet.withAlpha(40),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: AppColors.signalViolet.withAlpha(100)),
+                    color: AppColors.accentGlowSoft,
+                    borderRadius: BorderRadius.circular(6.r),
+                    border: Border.all(
+                      color: AppColors.primaryAction.withAlpha(100),
+                      width: 1.r,
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.view_in_ar, size: 14, color: AppColors.signalViolet),
-                      const SizedBox(width: 4),
-                      Text('3D MESH', style: AppTextStyles.labelSmall(color: AppColors.signalViolet)),
+                      Icon(
+                        Icons.view_in_ar_rounded,
+                        size: 14.r,
+                        color: AppColors.primaryAction,
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        AppStrings.tag3dMesh,
+                        style: AppTextStyles.labelSmall(
+                          color: AppColors.primaryAction,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10.w),
                 Expanded(
                   child: Text(
-                    widget.title ?? '3D Mesh Model',
-                    style: AppTextStyles.headingSmall(),
+                    widget.title ?? AppStrings.meshModelTitle,
+                    style: AppTextStyles.headingSmall(
+                      fontWeight: FontWeight.w700,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.refresh_outlined, color: AppColors.slate),
-                  tooltip: 'Reset Camera',
+                  icon: Icon(
+                    Icons.refresh_rounded,
+                    color: AppColors.textMuted,
+                    size: 20.r,
+                  ),
+                  tooltip: AppStrings.resetCamera,
                   onPressed: () => _controller.cameraOrbit(0, 75, 105),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close, color: AppColors.slate),
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: AppColors.textMuted,
+                    size: 20.r,
+                  ),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
@@ -106,13 +138,13 @@ class _MeshViewerModalState extends State<MeshViewerModal> {
             child: Stack(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12.r),
                   child: O3D.network(
                     src: widget.meshUrl,
                     controller: _controller,
                     autoRotate: true,
                     cameraControls: true,
-                    backgroundColor: AppColors.surface,
+                    backgroundColor: AppColors.surfaceCard,
                   ),
                 ),
 
@@ -120,28 +152,35 @@ class _MeshViewerModalState extends State<MeshViewerModal> {
                 if (_isLoading)
                   Positioned.fill(
                     child: Container(
-                      color: AppColors.ink.withAlpha(220),
+                      color: AppColors.bgApp.withAlpha(220),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const ApertureIndicator(size: 56, color: AppColors.signalViolet),
-                          const SizedBox(height: 20),
-                          Text(
-                            'Loading 3D Asset...',
-                            style: AppTextStyles.headingSmall(color: AppColors.bone),
+                          ApertureIndicator(
+                            size: 56.r,
+                            color: AppColors.primaryAction,
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 20.h),
                           Text(
-                            'Fetching .glb mesh data (${(_loadProgress * 100).toInt()}%)',
-                            style: AppTextStyles.bodySmall(color: AppColors.slate),
+                            AppStrings.loading3dAsset,
+                            style: AppTextStyles.headingSmall(
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 8.h),
+                          Text(
+                            '${AppStrings.fetchingGlbMeshDataPrefix}${(_loadProgress * 100).toInt()}%)',
+                            style: AppTextStyles.bodySmall(
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                          SizedBox(height: 16.h),
                           SizedBox(
-                            width: 200,
+                            width: 200.w,
                             child: LinearProgressIndicator(
                               value: _loadProgress > 0 ? _loadProgress : null,
-                              backgroundColor: AppColors.surface,
-                              color: AppColors.signalViolet,
+                              backgroundColor: AppColors.surfaceInput,
+                              color: AppColors.primaryAction,
                             ),
                           ),
                         ],
@@ -154,26 +193,46 @@ class _MeshViewerModalState extends State<MeshViewerModal> {
 
           // ── Controls Hint Bar ─────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              border: Border(top: BorderSide(color: AppColors.borderSubtle)),
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceCard,
+              border: Border(
+                top: BorderSide(color: AppColors.borderSubtle, width: 1.r),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.touch_app_outlined, size: 16, color: AppColors.slate),
-                    const SizedBox(width: 6),
-                    Text('Drag to Rotate', style: AppTextStyles.labelMedium(color: AppColors.slate)),
+                    Icon(
+                      Icons.touch_app_outlined,
+                      size: 16.r,
+                      color: AppColors.textMuted,
+                    ),
+                    SizedBox(width: 6.w),
+                    Text(
+                      AppStrings.dragToRotate,
+                      style: AppTextStyles.labelMedium(
+                        color: AppColors.textMuted,
+                      ),
+                    ),
                   ],
                 ),
                 Row(
                   children: [
-                    const Icon(Icons.pinch_outlined, size: 16, color: AppColors.slate),
-                    const SizedBox(width: 6),
-                    Text('Pinch to Zoom', style: AppTextStyles.labelMedium(color: AppColors.slate)),
+                    Icon(
+                      Icons.pinch_outlined,
+                      size: 16.r,
+                      color: AppColors.textMuted,
+                    ),
+                    SizedBox(width: 6.w),
+                    Text(
+                      AppStrings.pinchToZoom,
+                      style: AppTextStyles.labelMedium(
+                        color: AppColors.textMuted,
+                      ),
+                    ),
                   ],
                 ),
               ],
