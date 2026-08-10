@@ -1,205 +1,172 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
 
-/// Styled text input field with focus glow and real-time external error support.
-/// Renders error messages cleanly BELOW the container to prevent box clipping.
+/// Reusable text input field — Darkroom design system.
+/// Flat, dark-surface styling. No glassmorphism.
 class AppTextField extends StatefulWidget {
-  final String hint;
-  final String? label;
-  final TextEditingController? controller;
-  final bool isPassword;
-  final TextInputType keyboardType;
-  final String? Function(String?)? validator;
-  final ValueChanged<String>? onChanged;
-  final TextInputAction textInputAction;
-  final FocusNode? focusNode;
-  final Widget? prefixIcon;
-  final bool readOnly;
-  final String? errorText;
-  final AutovalidateMode? autovalidateMode;
-
   const AppTextField({
     super.key,
-    required this.hint,
-    this.label,
-    this.controller,
-    this.isPassword = false,
-    this.keyboardType = TextInputType.text,
-    this.validator,
-    this.onChanged,
-    this.textInputAction = TextInputAction.next,
-    this.focusNode,
+    required this.controller,
+    required this.label,
+    this.hint,
     this.prefixIcon,
-    this.readOnly = false,
     this.errorText,
-    this.autovalidateMode,
+    this.isObscure = false,
+    this.keyboardType = TextInputType.text,
+    this.textInputAction = TextInputAction.next,
+    this.onChanged,
+    this.onFieldSubmitted,
+    this.validator,
+    this.autofillHints,
+    this.focusNode,
   });
+
+  final TextEditingController controller;
+  final String label;
+  final String? hint;
+  final IconData? prefixIcon;
+  final String? errorText;
+  final bool isObscure;
+  final TextInputType keyboardType;
+  final TextInputAction textInputAction;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onFieldSubmitted;
+  final FormFieldValidator<String>? validator;
+  final Iterable<String>? autofillHints;
+  final FocusNode? focusNode;
 
   @override
   State<AppTextField> createState() => _AppTextFieldState();
 }
 
 class _AppTextFieldState extends State<AppTextField> {
-  bool _obscure = true;
-  bool _isFocused = false;
+  late bool _obscureText;
+  bool _hasFocus = false;
   late FocusNode _focusNode;
-  String? _internalErrorText;
 
   @override
   void initState() {
     super.initState();
+    _obscureText = widget.isObscure;
     _focusNode = widget.focusNode ?? FocusNode();
     _focusNode.addListener(_onFocusChange);
   }
 
   void _onFocusChange() {
-    if (mounted) {
-      setState(() => _isFocused = _focusNode.hasFocus);
-    }
+    setState(() => _hasFocus = _focusNode.hasFocus);
   }
 
   @override
   void dispose() {
-    if (widget.focusNode == null) {
-      _focusNode.removeListener(_onFocusChange);
-      _focusNode.dispose();
-    }
+    if (widget.focusNode == null) _focusNode.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final String? activeErrorText =
-        (widget.errorText?.isNotEmpty == true) ? widget.errorText : _internalErrorText;
-    final bool hasError = activeErrorText != null && activeErrorText.isNotEmpty;
+    final hasError = widget.errorText != null && widget.errorText!.isNotEmpty;
+    final borderColor = hasError
+        ? AppColors.statusError
+        : _hasFocus
+            ? AppColors.ember
+            : AppColors.borderSubtle;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (widget.label != null) ...[
-          Text(
-            widget.label!,
-            style: AppTextStyles.bodyM.copyWith(
-              color: hasError
-                  ? AppColors.errorIndicator
-                  : (_isFocused ? AppColors.primaryAction : AppColors.textPrimary),
-              fontWeight: FontWeight.w600,
-            ),
+        Text(
+          widget.label,
+          style: AppTextStyles.labelMedium(
+            color: _hasFocus ? AppColors.ember : AppColors.slate,
           ),
-          SizedBox(height: 6.h),
-        ],
+        ),
+        const SizedBox(height: 6),
         AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
+          duration: const Duration(milliseconds: 180),
           decoration: BoxDecoration(
             color: AppColors.surfaceInput,
-            borderRadius: BorderRadius.circular(10.r),
-            border: Border.all(
-              color: hasError
-                  ? AppColors.errorIndicator
-                  : (_isFocused ? AppColors.borderFocus : AppColors.borderSubtle),
-              width: (hasError || _isFocused) ? 1.5.r : 1.0.r,
-            ),
-            boxShadow: hasError
-                ? [
-                    BoxShadow(
-                      color: AppColors.errorIndicator.withAlpha(30),
-                      blurRadius: 8.r,
-                      spreadRadius: 1.r,
-                    )
-                  ]
-                : (_isFocused
-                    ? [
-                        BoxShadow(
-                          color: AppColors.accentGlowSoft,
-                          blurRadius: 8.r,
-                          spreadRadius: 1.r,
-                        )
-                      ]
-                    : null),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: borderColor, width: _hasFocus ? 1.5 : 1),
           ),
-          child: TextFormField(
-            controller: widget.controller,
-            focusNode: _focusNode,
-            obscureText: widget.isPassword && _obscure,
-            keyboardType: widget.keyboardType,
-            autovalidateMode: widget.autovalidateMode ?? AutovalidateMode.onUserInteraction,
-            validator: (val) {
-              final err = widget.validator?.call(val);
-              if (_internalErrorText != err) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) setState(() => _internalErrorText = err);
-                });
-              }
-              return null; // Suppress internal error string inside InputDecoration to prevent box clipping
-            },
-            onChanged: (val) {
-              widget.onChanged?.call(val);
-              if (widget.validator != null) {
-                final err = widget.validator!(val);
-                if (_internalErrorText != err) {
-                  setState(() => _internalErrorText = err);
-                }
-              }
-            },
-            textInputAction: widget.textInputAction,
-            readOnly: widget.readOnly,
-            style: AppTextStyles.bodyL,
-            cursorColor: AppColors.primaryAction,
-            decoration: InputDecoration(
-              hintText: widget.hint,
-              hintStyle: AppTextStyles.bodyL.copyWith(color: AppColors.textMuted),
-              prefixIcon: widget.prefixIcon,
-              prefixIconColor: hasError
-                  ? AppColors.errorIndicator
-                  : (_isFocused ? AppColors.primaryAction : AppColors.textMuted),
-              suffixIcon: widget.isPassword
-                  ? IconButton(
-                      icon: Icon(
-                        _obscure
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                        color: AppColors.textMuted,
-                        size: 20.r,
-                      ),
-                      onPressed: () => setState(() => _obscure = !_obscure),
-                    )
-                  : null,
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              errorBorder: InputBorder.none,
-              focusedErrorBorder: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 14.w,
-                vertical: 14.h,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(9),
+            child: TextFormField(
+              controller: widget.controller,
+              focusNode: _focusNode,
+              obscureText: _obscureText,
+              keyboardType: widget.keyboardType,
+              textInputAction: widget.textInputAction,
+              autofillHints: widget.autofillHints,
+              style: AppTextStyles.bodyMedium(),
+              onChanged: widget.onChanged,
+              onFieldSubmitted: widget.onFieldSubmitted,
+              validator: widget.validator,
+              decoration: InputDecoration(
+                hintText: widget.hint,
+                hintStyle: AppTextStyles.bodyMedium(color: AppColors.textDisabled),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                filled: true,
+                fillColor: AppColors.surfaceInput,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 14,
+                ),
+                prefixIcon: widget.prefixIcon != null
+                    ? Icon(
+                        widget.prefixIcon,
+                        color: _hasFocus ? AppColors.ember : AppColors.slate,
+                        size: 20,
+                      )
+                    : null,
+                suffixIcon: widget.isObscure
+                    ? GestureDetector(
+                        onTap: () => setState(() => _obscureText = !_obscureText),
+                        child: Icon(
+                          _obscureText
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: AppColors.slate,
+                          size: 20,
+                        ),
+                      )
+                    : null,
               ),
             ),
           ),
         ),
-        if (hasError) ...[
-          SizedBox(height: 6.h),
-          Row(
-            children: [
-              Icon(
-                Icons.error_outline_rounded,
-                size: 14.r,
-                color: AppColors.errorIndicator,
-              ),
-              SizedBox(width: 6.w),
-              Expanded(
-                child: Text(
-                  activeErrorText,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.errorIndicator,
-                    fontWeight: FontWeight.w500,
+        // Error message
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 180),
+          child: hasError
+              ? Padding(
+                  key: ValueKey(widget.errorText),
+                  padding: const EdgeInsets.only(top: 5, left: 2),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        size: 13,
+                        color: AppColors.statusError,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          widget.errorText!,
+                          style: AppTextStyles.bodySmall(
+                              color: AppColors.statusError),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-            ],
-          ),
-        ],
+                )
+              : const SizedBox.shrink(key: ValueKey('no-error')),
+        ),
       ],
     );
   }

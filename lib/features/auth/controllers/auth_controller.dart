@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
@@ -16,6 +16,14 @@ class AuthController extends GetxController {
 
   AuthController({AuthRepository? authRepository})
       : _authRepository = authRepository ?? Get.find<AuthRepository>();
+
+  // TextEditingControllers
+  final loginEmailCtrl = TextEditingController();
+  final loginPasswordCtrl = TextEditingController();
+  final signupNameCtrl = TextEditingController();
+  final signupEmailCtrl = TextEditingController();
+  final signupPasswordCtrl = TextEditingController();
+  final signupConfirmPasswordCtrl = TextEditingController();
 
   // Reactive Auth State
   final RxBool isLoginLoading = false.obs;
@@ -187,5 +195,33 @@ class AuthController extends GetxController {
         errorMessage.value = ErrorHandler.map(failure);
       },
     );
+  }
+
+  void resetFormAndErrors() {
+    loginEmailError.value = null;
+    loginPasswordError.value = null;
+    signupNameError.value = null;
+    signupEmailError.value = null;
+    signupPasswordError.value = null;
+    signupConfirmPasswordError.value = null;
+    errorMessage.value = '';
+
+    loginEmailCtrl.clear();
+    loginPasswordCtrl.clear();
+    signupNameCtrl.clear();
+    signupEmailCtrl.clear();
+    signupPasswordCtrl.clear();
+    signupConfirmPasswordCtrl.clear();
+  }
+
+  @override
+  void onClose() {
+    loginEmailCtrl.dispose();
+    loginPasswordCtrl.dispose();
+    signupNameCtrl.dispose();
+    signupEmailCtrl.dispose();
+    signupPasswordCtrl.dispose();
+    signupConfirmPasswordCtrl.dispose();
+    super.onClose();
   }
 }
