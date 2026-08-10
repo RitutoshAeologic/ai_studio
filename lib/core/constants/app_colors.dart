@@ -1,69 +1,101 @@
 import 'package:flutter/material.dart';
 
-/// Design tokens for AI Studio — Sleek Modern Light Mode & Brand Palettes per ui_ux.md.
+/// Design tokens for AI Studio — "Darkroom" palette per revision cf6dff878693f1759a868d5c4231771b2b14e3a9.
+/// Inspired by darkroom photography / camera workflow. Warmer and more specific
+/// than generic SaaS-neon. Color itself communicates feature ownership:
+///   ember        → CTAs, active states, credit readouts (app-wide)
+///   signalViolet → 3D/MESH-only screens exclusively
 abstract class AppColors {
-  // ── Base Surfaces (Light Mode) ──────────────────────────────────────────────
-  static const Color bgApp = Color(0xFFF8F9FE);
-  static const Color bgPrimary = Color(0xFFF8F9FE);
-  static const Color surfaceCard = Color(0xFFFFFFFF);
-  static const Color surfacePanel = Color(0xFFFFFFFF);
-  static const Color surfaceInput = Color(0xFFF3F5FA);
-  static const Color borderSubtle = Color(0xFFE2E6F0);
-  static const Color borderFocus = Color(0xFF6C5CE7);
+  // ── Base Surfaces ──────────────────────────────────────────────────────────
+  /// Base app background — deepest layer
+  static const Color ink = Color(0xFF111318);
 
-  // ── Typography ──────────────────────────────────────────────────────────────
-  static const Color textPrimary = Color(0xFF1E1E2E);
-  static const Color textMuted = Color(0xFF6C728F);
-  static const Color textDisabled = Color(0xFFA0A5BA);
+  /// Cards, sheets, modals — elevated surface
+  static const Color surface = Color(0xFF1B1E26);
 
-  // ── Primary Action Accent (Indigo-to-Violet) ──────────────────────────────
-  static const Color primaryAction = Color(0xFF6C5CE7);
-  static const Color accentGlowStart = Color(0xFF6C5CE7);
-  static const Color accentGlowEnd = Color(0xFFA64CE7);
-  static const Color accentGlowSoft = Color(0x296C5CE7);
+  /// Input field backgrounds — subtle step above surface
+  static const Color surfaceInput = Color(0xFF23262F);
 
-  // ── Reward / Credit Gold Palette ──────────────────────────────────────────
-  static const Color creditGoldBg = Color(0xFFFFFBEB);
-  static const Color creditGoldCircleBg = Color(0xFFFEF3C7);
-  static const Color creditGoldBorder = Color(0xFFFDE68A);
-  static const Color creditGoldIcon = Color(0xFFD97706);
-  static const Color creditGoldTitle = Color(0xFFB45309);
-  static const Color creditGoldSubtext = Color(0xFF92400E);
+  /// Dividers, subtle borders
+  static const Color borderSubtle = Color(0xFF2A2D38);
 
-  // ── Status & Indicators ────────────────────────────────────────────────────
-  static const Color errorIndicator = Color(0xFFFF4757);
-  static const Color errorIndicatorSoft = Color(0x1FFF4757);
-  static const Color successIndicator = Color(0xFF2DD58C);
-  static const Color successIndicatorSoft = Color(0x1F2DD58C);
+  /// Focus / active border
+  static const Color borderFocus = Color(0xFFFF7A45);
+
+  // ── Text ──────────────────────────────────────────────────────────────────
+  /// Primary text on dark surfaces
+  static const Color bone = Color(0xFFF3F1EA);
+
+  /// Secondary text, inactive icons
+  static const Color slate = Color(0xFF8A93A6);
+
+  /// Disabled text
+  static const Color textDisabled = Color(0xFF4A4E5A);
+
+  // ── Primary Accent ─────────────────────────────────────────────────────────
+  /// Ember — primary CTA, active states, credit badge, progress fills
+  static const Color ember = Color(0xFFFF7A45);
+
+  /// Ember at 12% opacity — subtle background tint
+  static const Color emberSoft = Color(0x1FFF7A45);
+
+  /// Ember pressed state
+  static const Color emberPressed = Color(0xFFE0622E);
+
+  // ── Reserved Feature Accent ────────────────────────────────────────────────
+  /// Signal Violet — used ONLY for 3D/MESH_GEN feature screens.
+  /// Not used app-wide so it stays meaningful when it appears.
+  static const Color signalViolet = Color(0xFF6E56CF);
+  static const Color signalVioletSoft = Color(0x1F6E56CF);
+
+  // ── Semantic Status ────────────────────────────────────────────────────────
+  static const Color statusSuccess = Color(0xFF2DD58C);
+  static const Color statusSuccessSoft = Color(0x1F2DD58C);
+  static const Color statusWarning = Color(0xFFFACC15);
+  static const Color statusWarningSoft = Color(0x1FFACC15);
+  static const Color statusError = Color(0xFFFF4757);
+  static const Color statusErrorSoft = Color(0x1FFF4757);
+
+  // ── Job Status Semantic Colors ─────────────────────────────────────────────
+  static const Color jobIdle = Color(0xFF8A93A6);
+  static const Color jobQueued = Color(0xFF8A93A6);
+  static const Color jobProcessing = Color(0xFFFF7A45);
+  static const Color jobCompleted = Color(0xFF2DD58C);
+  static const Color jobError = Color(0xFFFF4757);
 
   // ── Gradients ──────────────────────────────────────────────────────────────
-  static const LinearGradient aiActionGradient = LinearGradient(
+  static const LinearGradient emberGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF6C5CE7), Color(0xFFA64CE7)],
+    colors: [Color(0xFFFF7A45), Color(0xFFFF5722)],
   );
 
-  // ── Legacy Compatibility Aliases (Mapped to Light Mode Palette) ─────────────
-  static const Color ink = bgApp;
-  static const Color surface = surfaceCard;
-  static const Color bone = textPrimary;
-  static const Color slate = textMuted;
-  static const Color ember = primaryAction;
-  static const Color emberSoft = accentGlowSoft;
-  static const Color emberPressed = primaryAction;
-  static const Color signalViolet = primaryAction;
-  static const Color signalVioletSoft = accentGlowSoft;
-  static const Color statusSuccess = successIndicator;
-  static const Color statusSuccessSoft = successIndicatorSoft;
-  static const Color statusWarning = creditGoldIcon;
-  static const Color statusWarningSoft = creditGoldBg;
-  static const Color statusError = errorIndicator;
-  static const Color statusErrorSoft = errorIndicatorSoft;
-  static const Color jobIdle = textMuted;
-  static const Color jobQueued = textMuted;
-  static const Color jobProcessing = creditGoldIcon;
-  static const Color jobCompleted = primaryAction;
-  static const Color jobError = errorIndicator;
-  static const LinearGradient emberGradient = aiActionGradient;
-  static const LinearGradient meshGradient = aiActionGradient;
+  static const LinearGradient meshGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF6E56CF), Color(0xFF4A35A8)],
+  );
+
+  // ── Convenience Aliases ───────────────────────────────────────────────────
+  static const Color bgApp = ink;
+  static const Color bgPrimary = ink;
+  static const Color surfaceCard = surface;
+  static const Color surfacePanel = surface;
+  static const Color textPrimary = bone;
+  static const Color textMuted = slate;
+  static const Color primaryAction = ember;
+  static const Color accentGlowStart = ember;
+  static const Color accentGlowEnd = ember;
+  static const Color accentGlowSoft = emberSoft;
+  static const Color creditGoldBg = emberSoft;
+  static const Color creditGoldCircleBg = emberSoft;
+  static const Color creditGoldBorder = emberSoft;
+  static const Color creditGoldIcon = ember;
+  static const Color creditGoldTitle = ember;
+  static const Color creditGoldSubtext = slate;
+  static const Color errorIndicator = statusError;
+  static const Color errorIndicatorSoft = statusErrorSoft;
+  static const Color successIndicator = statusSuccess;
+  static const Color successIndicatorSoft = statusSuccessSoft;
+  static const LinearGradient aiActionGradient = emberGradient;
 }

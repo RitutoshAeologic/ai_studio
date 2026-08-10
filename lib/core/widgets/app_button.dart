@@ -3,10 +3,11 @@ import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 
 import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
+import 'aperture_indicator.dart';
 
-/// Primary action button with gradient accent & press animation.
-/// Responsive layout using ScreenUtil, AppColors, and AppTextStyles per ui_ux.md.
-class AppButton extends StatefulWidget {
+/// Primary action button — Darkroom design system per revision cf6dff878693f1759a868d5c4231771b2b14e3a9.
+/// Solid ember background, Inter 600 label, built-in loading state.
+class AppButton extends StatelessWidget {
   const AppButton({
     super.key,
     required this.label,
@@ -14,8 +15,8 @@ class AppButton extends StatefulWidget {
     this.isLoading = false,
     this.isEnabled = true,
     this.width,
-    this.height,
-    this.borderRadius,
+    this.height = 52,
+    this.borderRadius = 10,
     this.color,
   });
 
@@ -24,93 +25,40 @@ class AppButton extends StatefulWidget {
   final bool isLoading;
   final bool isEnabled;
   final double? width;
-  final double? height;
-  final double? borderRadius;
+  final double height;
+  final double borderRadius;
   final Color? color;
 
   @override
-  State<AppButton> createState() => _AppButtonState();
-}
-
-class _AppButtonState extends State<AppButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pressController;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _pressController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.98).animate(
-      CurvedAnimation(parent: _pressController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _pressController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final isActive = widget.isEnabled && !widget.isLoading;
-    final effectiveHeight = widget.height ?? 52.h;
-    final effectiveRadius = widget.borderRadius ?? 12.r;
+    final isActive = isEnabled && !isLoading;
+    final bgColor = color ?? AppColors.ember;
 
     return AnimatedOpacity(
-      opacity: isActive ? 1.0 : 0.6,
+      opacity: isActive ? 1.0 : 0.5,
       duration: const Duration(milliseconds: 200),
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: SizedBox(
-          width: widget.width ?? double.infinity,
-          height: effectiveHeight,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: widget.color != null ? null : AppColors.aiActionGradient,
-              color: widget.color,
-              borderRadius: BorderRadius.circular(effectiveRadius),
-              boxShadow: isActive
-                  ? [
-                      BoxShadow(
-                        color: AppColors.accentGlowSoft,
-                        blurRadius: 12.r,
-                        spreadRadius: 1.r,
-                      )
-                    ]
-                  : null,
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: isActive ? widget.onPressed : null,
-                onTapDown: isActive ? (_) => _pressController.forward() : null,
-                onTapUp: isActive ? (_) => _pressController.reverse() : null,
-                onTapCancel: isActive ? () => _pressController.reverse() : null,
-                borderRadius: BorderRadius.circular(effectiveRadius),
-                child: Center(
-                  child: widget.isLoading
-                      ? SizedBox(
-                          width: 22.r,
-                          height: 22.r,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.r,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Text(
-                          widget.label,
-                          style: AppTextStyles.buttonLabel(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                ),
-              ),
+      child: SizedBox(
+        width: width ?? double.infinity,
+        height: height.h,
+        child: Material(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(borderRadius.r),
+          child: InkWell(
+            onTap: isActive ? onPressed : null,
+            borderRadius: BorderRadius.circular(borderRadius.r),
+            splashColor: AppColors.emberPressed.withAlpha(80),
+            highlightColor: AppColors.emberPressed.withAlpha(40),
+            child: Center(
+              child: isLoading
+                  ? ApertureIndicator(
+                      size: 28.r,
+                      color: AppColors.bone,
+                      state: ApertureState.open,
+                    )
+                  : Text(
+                      label,
+                      style: AppTextStyles.buttonLabel(),
+                    ),
             ),
           ),
         ),
@@ -119,7 +67,7 @@ class _AppButtonState extends State<AppButton>
   }
 }
 
-/// Secondary outlined button with responsive border and scaling.
+/// Secondary outlined button — transparent background, ember border.
 class AppOutlinedButton extends StatelessWidget {
   const AppOutlinedButton({
     super.key,
@@ -127,38 +75,35 @@ class AppOutlinedButton extends StatelessWidget {
     required this.onPressed,
     this.isEnabled = true,
     this.width,
-    this.height,
+    this.height = 52,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool isEnabled;
   final double? width;
-  final double? height;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: width ?? double.infinity,
-      height: height ?? 52.h,
+      height: height.h,
       child: OutlinedButton(
         onPressed: isEnabled ? onPressed : null,
         style: OutlinedButton.styleFrom(
           side: BorderSide(
-            color: isEnabled ? AppColors.primaryAction : AppColors.borderSubtle,
-            width: 1.5.r,
+            color: isEnabled ? AppColors.ember : AppColors.borderSubtle,
+            width: 1.r,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(10.r),
           ),
-          foregroundColor: AppColors.primaryAction,
+          foregroundColor: AppColors.ember,
         ),
         child: Text(
           label,
-          style: AppTextStyles.buttonLabel(
-            color: AppColors.primaryAction,
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTextStyles.buttonLabel(color: AppColors.ember),
         ),
       ),
     );

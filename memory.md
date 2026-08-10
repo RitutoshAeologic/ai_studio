@@ -39,15 +39,26 @@ This document records essential architectural decisions, system configurations, 
 
 ## 3. UI Design System & Theme Tokens
 
-- **Theme Mode**: **Sleek Modern Light Mode** (`AppTheme.lightTheme`).
+- **Theme Mode**: **Darkroom Dark Mode** (`AppTheme.darkTheme` / `ThemeMode.dark`) per revision `cf6dff878693f1759a868d5c4231771b2b14e3a9`.
 - **Color Palette (`AppColors`)**:
-  - `bgApp` / `bgPrimary`: `#F8F9FE` (Soft clean off-white background).
-  - `surfaceCard` / `surfacePanel`: `#FFFFFF` (Pure white crisp container surfaces).
-  - `surfaceInput`: `#F3F5FA` (Soft light grey text input container background).
-  - `textPrimary`: `#1E1E2E` (Deep charcoal primary text for ultra-high contrast).
-  - `textMuted`: `#6C728F` (Subtle balanced mid-grey for secondary/meta text).
-  - `primaryAction`: `#6C5CE7` → `#A64CE7` (Vibrant indigo-to-violet linear gradient).
-  - `creditGoldBg` / `creditGoldIcon`: `#FFFBEB` background, `#FDE68A` border, `#D97706` bolt icon, `#B45309` title text for 100 Free Credits badge.
+  - `ink`: `Color(0xFF111318)` (Base app background — deepest layer).
+  - `surface`: `Color(0xFF1B1E26)` (Cards, sheets, elevated surface).
+  - `surfaceInput`: `Color(0xFF23262F)` (Input field backgrounds).
+  - `borderSubtle`: `Color(0xFF2A2D38)` / `borderFocus`: `Color(0xFFFF7A45)`.
+  - `bone`: `Color(0xFFF3F1EA)` (Primary high-contrast text on dark surfaces).
+  - `slate`: `Color(0xFF8A93A6)` (Secondary text & inactive icons).
+  - `textDisabled`: `Color(0xFF4A4E5A)` (Disabled text).
+  - `ember`: `Color(0xFFFF7A45)` (Primary accent / CTA / credit badge / progress fills).
+  - `emberSoft`: `Color(0x1FFF7A45)` (Subtle 12% opacity background tint).
+  - `emberPressed`: `Color(0xFFE0622E)` (CTA pressed state).
+  - `signalViolet`: `Color(0xFF6E56CF)` (Reserved exclusively for 3D/MESH screens).
+  - `statusSuccess`: `Color(0xFF2DD58C)`, `statusWarning`: `Color(0xFFFACC15)`, `statusError`: `Color(0xFFFF4757)`.
+  - `emberGradient`: `LinearGradient(colors: [Color(0xFFFF7A45), Color(0xFFFF5722)])`.
+  - `meshGradient`: `LinearGradient(colors: [Color(0xFF6E56CF), Color(0xFF4A35A8)])`.
+- **Typography Pairing (`AppTextStyles`)**:
+  - **Space Grotesk** (`GoogleFonts.spaceGrotesk`): Display & Headings (`displayLarge`, `displayMedium`, `headingLarge`, `headingMedium`, `headingSmall`).
+  - **Inter** (`GoogleFonts.inter`): Body & UI text (`bodyLarge`, `bodyMedium`, `bodySmall`, `labelLarge`, `labelMedium`, `buttonLabel`).
+  - **JetBrains Mono** (`GoogleFonts.jetBrainsMono`): Data & Readouts (`creditCounter`, `jobStatus`, `jobId`, `dataLabel`).
 - **Viewport Responsiveness (`flutter_screenutil_plus`)**:
   - Initialized with `designSize: Size(390, 844)` in `lib/app/app.dart`.
   - All typography uses `.sp`, heights `.h`, widths `.w`, radii `.r`.
