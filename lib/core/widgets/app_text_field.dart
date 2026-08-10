@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
+import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 
 import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
@@ -93,14 +94,11 @@ class _AppTextFieldState extends State<AppTextField> {
           duration: const Duration(milliseconds: 180),
           decoration: BoxDecoration(
             color: AppColors.surfaceInput,
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(
-              color: borderColor,
-              width: _hasFocus ? 1.5.r : 1.r,
-            ),
+            borderRadius: BorderRadius.circular(10.r),
+            border: Border.all(color: borderColor, width: _hasFocus ? 1.5 : 1),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(11.r),
+            borderRadius: BorderRadius.circular(9.r),
             child: TextFormField(
               controller: widget.controller,
               focusNode: _focusNode,
@@ -108,15 +106,13 @@ class _AppTextFieldState extends State<AppTextField> {
               keyboardType: widget.keyboardType,
               textInputAction: widget.textInputAction,
               autofillHints: widget.autofillHints,
-              style: AppTextStyles.bodyL,
+              style: AppTextStyles.bodyMedium(),
               onChanged: widget.onChanged,
               onFieldSubmitted: widget.onFieldSubmitted,
               validator: widget.validator,
               decoration: InputDecoration(
                 hintText: widget.hint,
-                hintStyle: AppTextStyles.bodyM.copyWith(
-                  color: AppColors.textDisabled,
-                ),
+                hintStyle: AppTextStyles.bodyMedium(color: AppColors.textDisabled),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -132,9 +128,7 @@ class _AppTextFieldState extends State<AppTextField> {
                 prefixIcon: widget.prefixIcon != null
                     ? Icon(
                         widget.prefixIcon,
-                        color: _hasFocus
-                            ? AppColors.primaryAction
-                            : AppColors.textMuted,
+                        color: _hasFocus ? AppColors.ember : AppColors.slate,
                         size: 20.r,
                       )
                     : null,
@@ -144,9 +138,9 @@ class _AppTextFieldState extends State<AppTextField> {
                             setState(() => _obscureText = !_obscureText),
                         child: Icon(
                           _obscureText
-                              ? Icons.visibility_off_rounded
-                              : Icons.visibility_rounded,
-                          color: AppColors.textMuted,
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: AppColors.slate,
                           size: 20.r,
                         ),
                       )
@@ -165,11 +159,11 @@ class _AppTextFieldState extends State<AppTextField> {
                   child: Row(
                     children: [
                       Icon(
-                        Icons.error_outline_rounded,
-                        size: 14.r,
-                        color: AppColors.errorIndicator,
+                        Icons.error_outline,
+                        size: 13.r,
+                        color: AppColors.statusError,
                       ),
-                      SizedBox(width: 5.w),
+                      SizedBox(width: 4.w),
                       Expanded(
                         child: Text(
                           widget.errorText!,

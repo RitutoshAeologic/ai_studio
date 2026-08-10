@@ -53,16 +53,21 @@ class JobParams {
   /// Cheap path — integer ID into the server-side prompt library. Mutually exclusive with [userPrompt].
   final int? themeId;
 
-  const JobParams({this.userPrompt, this.themeId});
+  /// Storage download URL for input image (BG removal, theme change, or image reference).
+  final String? imageUrl;
+
+  const JobParams({this.userPrompt, this.themeId, this.imageUrl});
 
   Map<String, dynamic> toJson() => {
         'userPrompt': userPrompt,
         'themeId': themeId,
+        'imageUrl': imageUrl,
       };
 
   factory JobParams.fromJson(Map<String, dynamic> json) => JobParams(
         userPrompt: json['userPrompt'] as String?,
         themeId: json['themeId'] as int?,
+        imageUrl: json['imageUrl'] as String?,
       );
 }
 

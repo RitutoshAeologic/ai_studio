@@ -10,8 +10,9 @@ import '../../auth/controllers/auth_controller.dart';
 import '../../wallet/views/wallet_debug_view.dart';
 import '../widgets/credit_badge_widget.dart';
 
-/// Main application shell with persistent navigation header and tab bar.
-/// Responsive layout using ScreenUtil, AppStrings, AppColors, and AppTextStyles per ui_ux.md.
+import '../../generate/views/generation_studio_view.dart';
+import 'gallery_tab_view.dart';
+
 class HomeShellView extends StatefulWidget {
   const HomeShellView({super.key});
 
@@ -23,8 +24,8 @@ class _HomeShellViewState extends State<HomeShellView> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = const [
-    _GenerateTabPlaceholder(),
-    _GalleryTabPlaceholder(),
+    GenerationStudioView(),
+    GalleryTabView(),
     _WalletTabPlaceholder(),
     _ProfileTabPlaceholder(),
   ];
@@ -47,24 +48,13 @@ class _HomeShellViewState extends State<HomeShellView> {
             Container(
               width: 28.r,
               height: 28.r,
-              decoration: BoxDecoration(
-                gradient: AppColors.aiActionGradient,
-                borderRadius: BorderRadius.circular(8.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.accentGlowSoft,
-                    blurRadius: 8.r,
-                    spreadRadius: 1.r,
-                  )
-                ],
+              decoration: const BoxDecoration(
+                color: AppColors.ember,
+                shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.auto_awesome_rounded,
-                size: 16.r,
-                color: Colors.white,
-              ),
+              child: Icon(Icons.auto_awesome, size: 16.r, color: AppColors.bone),
             ),
-            SizedBox(width: 10.w),
+            SizedBox(width: 8.w),
             Text(
               AppStrings.appName,
               style: AppTextStyles.headingM.copyWith(
@@ -74,7 +64,7 @@ class _HomeShellViewState extends State<HomeShellView> {
           ],
         ),
         actions: [
-          // Persistent Credit Badge Widget
+          // Persistent Credit Badge Widget (Task F1.2)
           Padding(
             padding: EdgeInsets.only(right: 8.w),
             child: const CreditBadge(),
@@ -83,22 +73,16 @@ class _HomeShellViewState extends State<HomeShellView> {
           // Debug-only wallet inspector modal
           if (kDebugMode)
             IconButton(
-              icon: Icon(
-                Icons.bug_report_outlined,
-                color: AppColors.creditGoldIcon,
-                size: 20.r,
-              ),
+              icon: Icon(Icons.bug_report_outlined,
+                  color: AppColors.statusWarning, size: 20.r),
               tooltip: AppStrings.walletDebugTitle,
               onPressed: () => WalletDebugView.show(context),
             ),
 
           IconButton(
-            icon: Icon(
-              Icons.logout_rounded,
-              color: AppColors.textMuted,
-              size: 20.r,
-            ),
-            tooltip: AppStrings.signOut,
+            icon: Icon(Icons.logout_outlined,
+                color: AppColors.slate, size: 20.r),
+            tooltip: 'Sign Out',
             onPressed: () => authCtrl.signOut(),
           ),
           SizedBox(width: 4.w),
@@ -169,78 +153,7 @@ class _HomeShellViewState extends State<HomeShellView> {
   }
 }
 
-// ─── Tab Placeholders ────────────────────────────────────────────────────────
-
-class _GenerateTabPlaceholder extends StatelessWidget {
-  const _GenerateTabPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 64.r,
-            height: 64.r,
-            decoration: BoxDecoration(
-              gradient: AppColors.aiActionGradient,
-              borderRadius: BorderRadius.circular(16.r),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.accentGlowSoft,
-                  blurRadius: 16.r,
-                  spreadRadius: 2.r,
-                )
-              ],
-            ),
-            child: Icon(
-              Icons.auto_awesome_rounded,
-              size: 32.r,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: 20.h),
-          Text(
-            AppStrings.generationCanvasTitle,
-            style: AppTextStyles.headingL,
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            AppStrings.generationCanvasSubtitle,
-            style: AppTextStyles.bodyM.copyWith(color: AppColors.textMuted),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _GalleryTabPlaceholder extends StatelessWidget {
-  const _GalleryTabPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.grid_view_rounded, size: 48.r, color: AppColors.textMuted),
-          SizedBox(height: 16.h),
-          Text(
-            AppStrings.tabGallery,
-            style: AppTextStyles.headingL,
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            AppStrings.galleryTabSubtitle,
-            style: AppTextStyles.bodyM.copyWith(color: AppColors.textMuted),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// ── Tab Placeholders ─────────────────────────────────────────────────────────
 
 class _WalletTabPlaceholder extends StatelessWidget {
   const _WalletTabPlaceholder();
@@ -251,8 +164,8 @@ class _WalletTabPlaceholder extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.account_balance_wallet_rounded,
-              size: 48.r, color: AppColors.primaryAction),
+          Icon(Icons.account_balance_wallet,
+              size: 48.r, color: AppColors.ember),
           SizedBox(height: 16.h),
           Text(
             AppStrings.walletTitle,
@@ -280,17 +193,7 @@ class _ProfileTabPlaceholder extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 60.r,
-            height: 60.r,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceInput,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.borderSubtle, width: 1.r),
-            ),
-            child: Icon(Icons.person_rounded,
-                size: 32.r, color: AppColors.primaryAction),
-          ),
+          Icon(Icons.person, size: 48.r, color: AppColors.slate),
           SizedBox(height: 16.h),
           Obx(() => Text(
                 authCtrl.currentUser.value?.displayName ?? AppStrings.userProfile,
