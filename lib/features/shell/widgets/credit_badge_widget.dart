@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:get/get.dart';
+
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../wallet/controllers/wallet_controller.dart';
 
-/// Persistent header credit badge.
-///
-/// Shows live balance in JetBrains Mono ember-colored text.
-/// Digit-roll animation fires when balance changes.
+/// Persistent header credit badge displaying live wallet balance with digit animation.
+/// Responsive layout using AppColors, AppTextStyles, and ScreenUtil per ui_ux.md.
 class CreditBadge extends StatelessWidget {
   const CreditBadge({super.key});
 
@@ -20,24 +20,28 @@ class CreditBadge extends StatelessWidget {
       final isLoading = walletCtrl.isLoading.value;
 
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
         decoration: BoxDecoration(
-          color: AppColors.emberSoft,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.ember.withAlpha(50)),
+          color: AppColors.creditGoldBg,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: AppColors.creditGoldBorder, width: 1.r),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.bolt_rounded, color: AppColors.ember, size: 14),
-            const SizedBox(width: 5),
+            Icon(
+              Icons.bolt_rounded,
+              color: AppColors.creditGoldIcon,
+              size: 14.r,
+            ),
+            SizedBox(width: 5.w),
             if (isLoading)
-              const SizedBox(
-                width: 14,
-                height: 14,
+              SizedBox(
+                width: 14.r,
+                height: 14.r,
                 child: CircularProgressIndicator(
-                  strokeWidth: 1.5,
-                  color: AppColors.ember,
+                  strokeWidth: 1.5.r,
+                  color: AppColors.creditGoldIcon,
                 ),
               )
             else
@@ -53,7 +57,10 @@ class CreditBadge extends StatelessWidget {
                 child: Text(
                   key: ValueKey(balance),
                   '${balance ?? 0}',
-                  style: AppTextStyles.creditCounter(fontSize: 14),
+                  style: AppTextStyles.buttonLabel.copyWith(
+                    color: AppColors.creditGoldTitle,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
           ],

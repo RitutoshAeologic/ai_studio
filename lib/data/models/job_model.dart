@@ -1,5 +1,5 @@
+import 'package:ai_studio/domain/entities/job_entity.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/entities/job_entity.dart';
 
 /// Data model for jobs/{jobId} Firestore document.
 /// Handles bidirectional conversion with the shared Firestore schema.

@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:get/get.dart';
+
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -8,8 +10,8 @@ import '../../../domain/repositories/wallet_repository.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/wallet_controller.dart';
 
-/// Debug-only wallet inspector modal — never shown in production builds.
-/// guarded by [kDebugMode] at the call site (HomeShellView debug menu).
+/// Debug-only wallet inspector modal — guarded by [kDebugMode] at call site.
+/// Responsive layout using ScreenUtil, AppStrings, AppColors, and AppTextStyles per ui_ux.md.
 class WalletDebugView extends StatelessWidget {
   const WalletDebugView({super.key});
 
@@ -17,9 +19,9 @@ class WalletDebugView extends StatelessWidget {
     assert(kDebugMode, 'WalletDebugView must only be shown in debug builds');
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      backgroundColor: AppColors.surfaceCard,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
       builder: (_) => const WalletDebugView(),
     );
@@ -34,38 +36,50 @@ class WalletDebugView extends StatelessWidget {
     final addResult = ''.obs;
 
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24.r),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.bug_report_outlined,
-                  color: AppColors.statusWarning, size: 18),
-              const SizedBox(width: 8),
-              Text(AppStrings.walletDebugTitle,
-                  style: AppTextStyles.headingSmall(
-                      color: AppColors.statusWarning)),
+              Icon(
+                Icons.bug_report_outlined,
+                color: AppColors.creditGoldIcon,
+                size: 18.r,
+              ),
+              SizedBox(width: 8.w),
+              Text(
+                AppStrings.walletDebugTitle,
+                style: AppTextStyles.headingM.copyWith(
+                  color: AppColors.creditGoldTitle,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h),
 
-          // ── Raw wallet doc ────────────────────────────────────────────────
-          Text(AppStrings.rawWalletDoc,
-              style: AppTextStyles.labelMedium(color: AppColors.slate)),
-          const SizedBox(height: 8),
+          // Raw wallet document inspector
+          Text(
+            AppStrings.rawWalletDoc,
+            style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+          ),
+          SizedBox(height: 8.h),
           Obx(() {
             final w = walletCtrl.wallet.value;
             if (w == null) {
-              return Text('null',
-                  style: AppTextStyles.dataLabel(color: AppColors.slate));
+              return Text(
+                'null',
+                style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+              );
             }
             return Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12.r),
               decoration: BoxDecoration(
                 color: AppColors.surfaceInput,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(color: AppColors.borderSubtle, width: 1.r),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,20 +92,19 @@ class WalletDebugView extends StatelessWidget {
             );
           }),
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20.h),
 
-          // ── Add credits ───────────────────────────────────────────────────
+          // Add test credits action
           Obx(() => ElevatedButton.icon(
                 onPressed: isAdding.value
                     ? null
                     : () async {
-                        final uid =
-                            authCtrl.currentUser.value?.uid;
+                        final uid = authCtrl.currentUser.value?.uid;
                         if (uid == null) return;
                         isAdding.value = true;
                         addResult.value = '';
-                        final result = await walletRepo
-                            .debugAddCredits(uid, 100);
+                        final result =
+                            await walletRepo.debugAddCredits(uid, 100);
                         isAdding.value = false;
                         result.fold(
                           (_) => addResult.value =
@@ -100,41 +113,50 @@ class WalletDebugView extends StatelessWidget {
                         );
                       },
                 icon: isAdding.value
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
+                    ? SizedBox(
+                        width: 14.r,
+                        height: 14.r,
                         child: CircularProgressIndicator(
-                            strokeWidth: 1.5,
-                            color: AppColors.bone),
+                          strokeWidth: 1.5.r,
+                          color: Colors.white,
+                        ),
                       )
-                    : const Icon(Icons.add, size: 16, color: AppColors.bone),
+                    : Icon(Icons.add_rounded, size: 16.r, color: Colors.white),
                 label: Text(
                   isAdding.value
                       ? AppStrings.addingCredits
                       : AppStrings.addTestCredits,
-                  style: AppTextStyles.buttonLabel(),
+                  style: AppTextStyles.buttonLabel.copyWith(color: Colors.white),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.statusWarning,
-                  foregroundColor: AppColors.bone,
+                  backgroundColor: AppColors.primaryAction,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(8.r),
                   ),
                 ),
               )),
 
           Obx(() => addResult.value.isNotEmpty
               ? Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Text(addResult.value,
-                      style: AppTextStyles.dataLabel(
-                          color: addResult.value.startsWith('✓')
-                              ? AppColors.statusSuccess
-                              : AppColors.statusError)),
+                  padding: EdgeInsets.only(top: 10.h),
+                  child: Text(
+                    addResult.value,
+                    style: AppTextStyles.caption.copyWith(
+                      color: addResult.value.startsWith('✓')
+                          ? AppColors.creditGoldTitle
+                          : AppColors.errorIndicator,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 )
               : const SizedBox.shrink()),
 
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h),
         ],
       ),
     );
@@ -142,15 +164,24 @@ class WalletDebugView extends StatelessWidget {
 
   Widget _field(String key, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: EdgeInsets.only(bottom: 4.h),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('$key: ',
-              style: AppTextStyles.dataLabel(color: AppColors.slate)),
+          Text(
+            '$key: ',
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.textMuted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           Expanded(
-            child: Text(value,
-                style: AppTextStyles.dataLabel(color: AppColors.bone)),
+            child: Text(
+              value,
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
           ),
         ],
       ),

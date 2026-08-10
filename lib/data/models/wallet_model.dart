@@ -1,5 +1,5 @@
+import 'package:ai_studio/domain/entities/wallet_entity.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/entities/wallet_entity.dart';
 
 /// Data model for wallets/{userId} Firestore document.
 /// Handles conversion between Firestore snapshots and domain WalletEntity.

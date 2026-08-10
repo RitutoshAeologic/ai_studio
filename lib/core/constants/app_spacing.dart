@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 
-/// Spacing tokens according to ui_ux.md §4.
+/// Spacing tokens according to ui_ux.md §4 with responsive ScreenUtil extensions.
 abstract class AppSpacing {
-  static const double xs = 4.0;
-  static const double sm = 8.0;
-  static const double md = 16.0;
-  static const double lg = 24.0;
-  static const double xl = 32.0;
-  static const double xxl = 48.0;
+  static double get xs => 4.r;
+  static double get sm => 8.r;
+  static double get md => 16.r;
+  static double get lg => 24.r;
+  static double get xl => 32.r;
+  static double get xxl => 48.r;
 
   // EdgeInsets helpers
-  static const EdgeInsets paddingScreen = EdgeInsets.all(md);
-  static const EdgeInsets paddingCard = EdgeInsets.all(md);
-  static const EdgeInsets paddingChip = EdgeInsets.symmetric(horizontal: md, vertical: sm);
+  static EdgeInsets get paddingScreen => EdgeInsets.all(16.r);
+  static EdgeInsets get paddingCard => EdgeInsets.all(16.r);
+  static EdgeInsets get paddingChip =>
+      EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h);
 
   // SizedBox helpers
-  static const SizedBox gapXs = SizedBox(height: xs, width: xs);
-  static const SizedBox gapSm = SizedBox(height: sm, width: sm);
-  static const SizedBox gapMd = SizedBox(height: md, width: md);
-  static const SizedBox gapLg = SizedBox(height: lg, width: lg);
-  static const SizedBox gapXl = SizedBox(height: xl, width: xl);
+  static SizedBox get gapXs => SizedBox(height: 4.h, width: 4.w);
+  static SizedBox get gapSm => SizedBox(height: 8.h, width: 8.w);
+  static SizedBox get gapMd => SizedBox(height: 16.h, width: 16.w);
+  static SizedBox get gapLg => SizedBox(height: 24.h, width: 24.w);
+  static SizedBox get gapXl => SizedBox(height: 32.h, width: 32.w);
 }

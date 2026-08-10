@@ -1,12 +1,12 @@
+import 'package:ai_studio/core/constants/app_strings.dart';
+import 'package:ai_studio/core/error/failure.dart';
+import 'package:ai_studio/core/error/result.dart';
+import 'package:ai_studio/core/utils/logger.dart';
+import 'package:ai_studio/data/models/user_model.dart';
+import 'package:ai_studio/domain/entities/user_entity.dart';
+import 'package:ai_studio/domain/repositories/auth_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
-import '../../core/constants/app_strings.dart';
-import '../../core/error/failure.dart';
-import '../../core/error/result.dart';
-import '../../core/utils/logger.dart';
-import '../../domain/entities/user_entity.dart';
-import '../../domain/repositories/auth_repository.dart';
-import '../models/user_model.dart';
 
 /// Concrete implementation of AuthRepository connecting Firebase Auth & Cloud Firestore.
 class AuthRepositoryImpl implements AuthRepository {

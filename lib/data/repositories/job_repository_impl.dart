@@ -1,10 +1,11 @@
+import 'package:ai_studio/core/error/failure.dart';
+import 'package:ai_studio/core/error/result.dart';
+import 'package:ai_studio/core/utils/logger.dart';
+import 'package:ai_studio/data/models/job_model.dart';
+import 'package:ai_studio/domain/entities/job_entity.dart';
+import 'package:ai_studio/domain/repositories/job_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../core/error/failure.dart';
-import '../../core/error/result.dart';
-import '../../core/utils/logger.dart';
-import '../../domain/entities/job_entity.dart';
-import '../../domain/repositories/job_repository.dart';
-import '../models/job_model.dart';
+
 
 /// Concrete job repository — listens to jobs/{jobId} Firestore snapshots.
 class JobRepositoryImpl implements JobRepository {

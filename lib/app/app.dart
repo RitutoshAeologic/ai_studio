@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:get/get.dart';
+
 import '../core/constants/app_strings.dart';
 import '../core/theme/app_theme.dart';
 import 'bindings/initial_binding.dart';
@@ -20,9 +21,9 @@ class AiStudioApp extends StatelessWidget {
         return GetMaterialApp(
           title: AppStrings.appName,
           debugShowCheckedModeBanner: false,
-          theme: AppTheme.darkTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: ThemeMode.dark,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.lightTheme,
+          themeMode: ThemeMode.light,
           initialBinding: InitialBinding(),
           initialRoute: AppPages.initial,
           getPages: AppPages.pages,

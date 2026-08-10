@@ -1,6 +1,6 @@
+import 'package:ai_studio/domain/entities/user_entity.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
-import '../../domain/entities/user_entity.dart';
 
 /// Data model representing user profile matching Firestore schema `users/{uid}`.
 class UserModel extends UserEntity {

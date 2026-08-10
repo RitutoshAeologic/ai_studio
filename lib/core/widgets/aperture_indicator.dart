@@ -1,28 +1,23 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import '../constants/app_colors.dart';
 
 /// Signature animation widget — radial iris/aperture blade ring.
-///
-/// Replaces generic circular spinners for:
-///   - Job `processing` state in JobController-driven screens
-///   - App splash / loading screens
-///   - Pull-to-refresh indicators
-///
-/// States: [ApertureState.opening] → [ApertureState.open] → [ApertureState.closing]
+/// Responsive layout using ScreenUtil and AppColors per ui_ux.md.
 enum ApertureState { opening, open, closing }
 
 class ApertureIndicator extends StatefulWidget {
   const ApertureIndicator({
     super.key,
-    this.size = 56,
-    this.color = AppColors.ember,
+    this.size,
+    this.color = AppColors.primaryAction,
     this.bladeCount = 8,
     this.state = ApertureState.opening,
     this.onClosed,
   });
 
-  final double size;
+  final double? size;
   final Color color;
   final int bladeCount;
   final ApertureState state;
@@ -79,7 +74,6 @@ class _ApertureIndicatorState extends State<ApertureIndicator>
   void _start() {
     _controller.reset();
     if (widget.state == ApertureState.open) {
-      // Continuously rotate while open
       _controller.repeat();
     } else if (widget.state == ApertureState.closing) {
       _controller.forward().whenComplete(() => widget.onClosed?.call());
@@ -96,10 +90,11 @@ class _ApertureIndicatorState extends State<ApertureIndicator>
 
   @override
   Widget build(BuildContext context) {
+    final effectiveSize = widget.size ?? 56.r;
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) => CustomPaint(
-        size: Size(widget.size, widget.size),
+        size: Size(effectiveSize, effectiveSize),
         painter: _AperturePainter(
           openAmount: widget.state == ApertureState.open
               ? 1.0
@@ -167,7 +162,6 @@ class _AperturePainter extends CustomPainter {
       canvas.drawPath(bladePath, paint);
     }
 
-    // Center dot
     final dotPaint = Paint()
       ..color = color.withAlpha(((0.4 + 0.6 * openAmount) * 255).toInt())
       ..style = PaintingStyle.fill;

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
+
 import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
 
-/// Reusable text input field — Darkroom design system.
-/// Flat, dark-surface styling. No glassmorphism.
+/// Reusable text input field with ScreenUtil scaling and reactive validation.
+/// Fully compliant with ScreenUtil, AppColors, and AppTextStyles per ui_ux.md.
 class AppTextField extends StatefulWidget {
   const AppTextField({
     super.key,
@@ -13,6 +15,7 @@ class AppTextField extends StatefulWidget {
     this.prefixIcon,
     this.errorText,
     this.isObscure = false,
+    this.isPassword = false,
     this.keyboardType = TextInputType.text,
     this.textInputAction = TextInputAction.next,
     this.onChanged,
@@ -28,6 +31,7 @@ class AppTextField extends StatefulWidget {
   final IconData? prefixIcon;
   final String? errorText;
   final bool isObscure;
+  final bool isPassword;
   final TextInputType keyboardType;
   final TextInputAction textInputAction;
   final ValueChanged<String>? onChanged;
@@ -35,6 +39,8 @@ class AppTextField extends StatefulWidget {
   final FormFieldValidator<String>? validator;
   final Iterable<String>? autofillHints;
   final FocusNode? focusNode;
+
+  bool get effectiveIsObscure => isObscure || isPassword;
 
   @override
   State<AppTextField> createState() => _AppTextFieldState();
@@ -48,7 +54,7 @@ class _AppTextFieldState extends State<AppTextField> {
   @override
   void initState() {
     super.initState();
-    _obscureText = widget.isObscure;
+    _obscureText = widget.effectiveIsObscure;
     _focusNode = widget.focusNode ?? FocusNode();
     _focusNode.addListener(_onFocusChange);
   }
@@ -67,9 +73,9 @@ class _AppTextFieldState extends State<AppTextField> {
   Widget build(BuildContext context) {
     final hasError = widget.errorText != null && widget.errorText!.isNotEmpty;
     final borderColor = hasError
-        ? AppColors.statusError
+        ? AppColors.errorIndicator
         : _hasFocus
-            ? AppColors.ember
+            ? AppColors.borderFocus
             : AppColors.borderSubtle;
 
     return Column(
@@ -77,20 +83,24 @@ class _AppTextFieldState extends State<AppTextField> {
       children: [
         Text(
           widget.label,
-          style: AppTextStyles.labelMedium(
-            color: _hasFocus ? AppColors.ember : AppColors.slate,
+          style: AppTextStyles.caption.copyWith(
+            fontWeight: FontWeight.w600,
+            color: _hasFocus ? AppColors.primaryAction : AppColors.textMuted,
           ),
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: 6.h),
         AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           decoration: BoxDecoration(
             color: AppColors.surfaceInput,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: borderColor, width: _hasFocus ? 1.5 : 1),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: borderColor,
+              width: _hasFocus ? 1.5.r : 1.r,
+            ),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(9),
+            borderRadius: BorderRadius.circular(11.r),
             child: TextFormField(
               controller: widget.controller,
               focusNode: _focusNode,
@@ -98,13 +108,15 @@ class _AppTextFieldState extends State<AppTextField> {
               keyboardType: widget.keyboardType,
               textInputAction: widget.textInputAction,
               autofillHints: widget.autofillHints,
-              style: AppTextStyles.bodyMedium(),
+              style: AppTextStyles.bodyL,
               onChanged: widget.onChanged,
               onFieldSubmitted: widget.onFieldSubmitted,
               validator: widget.validator,
               decoration: InputDecoration(
                 hintText: widget.hint,
-                hintStyle: AppTextStyles.bodyMedium(color: AppColors.textDisabled),
+                hintStyle: AppTextStyles.bodyM.copyWith(
+                  color: AppColors.textDisabled,
+                ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -113,26 +125,29 @@ class _AppTextFieldState extends State<AppTextField> {
                 disabledBorder: InputBorder.none,
                 filled: true,
                 fillColor: AppColors.surfaceInput,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 14,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 14.w,
+                  vertical: 14.h,
                 ),
                 prefixIcon: widget.prefixIcon != null
                     ? Icon(
                         widget.prefixIcon,
-                        color: _hasFocus ? AppColors.ember : AppColors.slate,
-                        size: 20,
+                        color: _hasFocus
+                            ? AppColors.primaryAction
+                            : AppColors.textMuted,
+                        size: 20.r,
                       )
                     : null,
-                suffixIcon: widget.isObscure
+                suffixIcon: widget.effectiveIsObscure
                     ? GestureDetector(
-                        onTap: () => setState(() => _obscureText = !_obscureText),
+                        onTap: () =>
+                            setState(() => _obscureText = !_obscureText),
                         child: Icon(
                           _obscureText
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          color: AppColors.slate,
-                          size: 20,
+                              ? Icons.visibility_off_rounded
+                              : Icons.visibility_rounded,
+                          color: AppColors.textMuted,
+                          size: 20.r,
                         ),
                       )
                     : null,
@@ -140,26 +155,28 @@ class _AppTextFieldState extends State<AppTextField> {
             ),
           ),
         ),
-        // Error message
+        // Outside & below container error display discipline
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 180),
           child: hasError
               ? Padding(
                   key: ValueKey(widget.errorText),
-                  padding: const EdgeInsets.only(top: 5, left: 2),
+                  padding: EdgeInsets.only(top: 5.h, left: 2.w),
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.error_outline,
-                        size: 13,
-                        color: AppColors.statusError,
+                      Icon(
+                        Icons.error_outline_rounded,
+                        size: 14.r,
+                        color: AppColors.errorIndicator,
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 5.w),
                       Expanded(
                         child: Text(
                           widget.errorText!,
-                          style: AppTextStyles.bodySmall(
-                              color: AppColors.statusError),
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.errorIndicator,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],

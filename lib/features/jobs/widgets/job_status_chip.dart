@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
+
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../domain/entities/job_entity.dart';
 
-/// Compact status readout chip — JetBrains Mono text + aperture icon.
-/// Color and icon rotation convey status without needing colored dots.
+/// Compact status readout chip — reactive text + spinning aperture icon.
+/// Responsive layout using ScreenUtil, AppColors, and AppTextStyles per ui_ux.md.
 class JobStatusChip extends StatefulWidget {
   const JobStatusChip({super.key, required this.status});
 
@@ -53,24 +55,24 @@ class _JobStatusChipState extends State<JobStatusChip>
   Color get _chipColor {
     switch (widget.status) {
       case JobStatus.completed:
-        return AppColors.jobCompleted;
+        return AppColors.primaryAction;
       case JobStatus.error:
-        return AppColors.jobError;
+        return AppColors.errorIndicator;
       case JobStatus.processing:
-        return AppColors.jobProcessing;
+        return AppColors.creditGoldIcon;
       default:
-        return AppColors.jobQueued;
+        return AppColors.textMuted;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
         color: _chipColor.withAlpha(20),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: _chipColor.withAlpha(60), width: 1),
+        borderRadius: BorderRadius.circular(6.r),
+        border: Border.all(color: _chipColor.withAlpha(60), width: 1.r),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -81,12 +83,15 @@ class _JobStatusChipState extends State<JobStatusChip>
               angle: _rotateCtrl.value * 2 * 3.14159,
               child: child,
             ),
-            child: Icon(Icons.camera_alt_outlined, size: 10, color: _chipColor),
+            child: Icon(Icons.camera_alt_outlined, size: 10.r, color: _chipColor),
           ),
-          const SizedBox(width: 5),
+          SizedBox(width: 5.w),
           Text(
             widget.status.firestoreValue,
-            style: AppTextStyles.jobStatus(color: _chipColor),
+            style: AppTextStyles.caption.copyWith(
+              color: _chipColor,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),

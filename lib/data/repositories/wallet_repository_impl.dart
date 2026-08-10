@@ -1,10 +1,10 @@
+import 'package:ai_studio/data/models/wallet_model.dart';
+import 'package:ai_studio/domain/entities/wallet_entity.dart';
+import 'package:ai_studio/domain/repositories/wallet_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../core/error/failure.dart';
-import '../../core/error/result.dart';
-import '../../core/utils/logger.dart';
-import '../../domain/entities/wallet_entity.dart';
-import '../../domain/repositories/wallet_repository.dart';
-import '../models/wallet_model.dart';
+import 'package:ai_studio/core/error/failure.dart';
+import 'package:ai_studio/core/error/result.dart';
+import 'package:ai_studio/core/utils/logger.dart';
 
 /// Concrete wallet repository — listens to wallets/{userId} Firestore snapshots.
 class WalletRepositoryImpl implements WalletRepository {

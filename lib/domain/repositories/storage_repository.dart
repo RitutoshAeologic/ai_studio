@@ -1,6 +1,6 @@
 import 'dart:typed_data';
-import '../../core/error/failure.dart';
-import '../../core/error/result.dart';
+import 'package:ai_studio/core/error/failure.dart';
+import 'package:ai_studio/core/error/result.dart';
 
 /// Abstract contract for Firebase Storage file upload & asset operations.
 abstract class StorageRepository {

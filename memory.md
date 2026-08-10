@@ -81,3 +81,9 @@ This document records essential architectural decisions, system configurations, 
 5. **Frontend Image Validation Pipeline (`ImageValidator`)**:
    - Executes before uploading to Firebase Storage/GPU pipelines. Runs pixel matrix analysis in a background Isolate (`compute(...)`).
    - Checks: File format, file size (512B–20MB), resolution (256x256–4096x4096), corruption, blank/white/black screens, contrast/detail score, Laplacian blur variance, and feature-dependent subject detection (`AiFeatureTarget`).
+
+6. **ScreenUtil Responsive Scaling & Zero Hardcoded Constants**:
+   - Every font size uses `.sp` scaling (`AppTextStyles.displayXL`, `headingM`, `bodyL`, `caption`).
+   - Every dimension, padding, border radius, and icon size uses `.w`, `.h`, `.r` extensions.
+   - 100% of user-facing strings are defined in `AppStrings` (`lib/core/constants/app_strings.dart`). Zero raw inline strings exist in views or widgets.
+   - All colors are mapped to `AppColors` tokens.

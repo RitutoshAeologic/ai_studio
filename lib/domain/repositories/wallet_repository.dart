@@ -1,6 +1,6 @@
-import '../../core/error/failure.dart';
-import '../../core/error/result.dart';
-import '../entities/wallet_entity.dart';
+import 'package:ai_studio/core/error/failure.dart';
+import 'package:ai_studio/core/error/result.dart';
+import 'package:ai_studio/domain/entities/wallet_entity.dart';
 
 /// Abstract domain contract for the reactive credit wallet.
 abstract class WalletRepository {

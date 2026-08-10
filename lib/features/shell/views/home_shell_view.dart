@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:get/get.dart';
+
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -8,6 +10,8 @@ import '../../auth/controllers/auth_controller.dart';
 import '../../wallet/views/wallet_debug_view.dart';
 import '../widgets/credit_badge_widget.dart';
 
+/// Main application shell with persistent navigation header and tab bar.
+/// Responsive layout using ScreenUtil, AppStrings, AppColors, and AppTextStyles per ui_ux.md.
 class HomeShellView extends StatefulWidget {
   const HomeShellView({super.key});
 
@@ -30,54 +34,74 @@ class _HomeShellViewState extends State<HomeShellView> {
     final authCtrl = Get.find<AuthController>();
 
     return Scaffold(
-      backgroundColor: AppColors.ink,
+      backgroundColor: AppColors.bgApp,
 
-      // ── Persistent Header ──────────────────────────────────────────────────
+      // ── Persistent Navigation Header ─────────────────────────────────────────
       appBar: AppBar(
-        backgroundColor: AppColors.ink,
+        backgroundColor: AppColors.bgApp,
         elevation: 0,
+        scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
         title: Row(
           children: [
             Container(
-              width: 24,
-              height: 24,
-              decoration: const BoxDecoration(
-                color: AppColors.ember,
-                shape: BoxShape.circle,
+              width: 28.r,
+              height: 28.r,
+              decoration: BoxDecoration(
+                gradient: AppColors.aiActionGradient,
+                borderRadius: BorderRadius.circular(8.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.accentGlowSoft,
+                    blurRadius: 8.r,
+                    spreadRadius: 1.r,
+                  )
+                ],
               ),
-              child: const Icon(Icons.auto_awesome, size: 14, color: AppColors.bone),
+              child: Icon(
+                Icons.auto_awesome_rounded,
+                size: 16.r,
+                color: Colors.white,
+              ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 10.w),
             Text(
               AppStrings.appName,
-              style: AppTextStyles.headingSmall(),
+              style: AppTextStyles.headingM.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),
         actions: [
-          // Persistent Credit Badge Widget (Task F1.2)
-          const Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: CreditBadge(),
+          // Persistent Credit Badge Widget
+          Padding(
+            padding: EdgeInsets.only(right: 8.w),
+            child: const CreditBadge(),
           ),
 
-          // Debug-only wallet inspector modal (Task F1.2)
+          // Debug-only wallet inspector modal
           if (kDebugMode)
             IconButton(
-              icon: const Icon(Icons.bug_report_outlined,
-                  color: AppColors.statusWarning, size: 20),
+              icon: Icon(
+                Icons.bug_report_outlined,
+                color: AppColors.creditGoldIcon,
+                size: 20.r,
+              ),
               tooltip: AppStrings.walletDebugTitle,
               onPressed: () => WalletDebugView.show(context),
             ),
 
           IconButton(
-            icon: const Icon(Icons.logout_outlined,
-                color: AppColors.slate, size: 20),
-            tooltip: 'Sign Out',
+            icon: Icon(
+              Icons.logout_rounded,
+              color: AppColors.textMuted,
+              size: 20.r,
+            ),
+            tooltip: AppStrings.signOut,
             onPressed: () => authCtrl.signOut(),
           ),
-          const SizedBox(width: 4),
+          SizedBox(width: 4.w),
         ],
       ),
 
@@ -87,44 +111,55 @@ class _HomeShellViewState extends State<HomeShellView> {
         children: _pages,
       ),
 
-      // ── Bottom Navigation ─────────────────────────────────────────────────
+      // ── Bottom Navigation Bar ──────────────────────────────────────────────
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceCard,
           border: Border(
-            top: BorderSide(color: AppColors.borderSubtle, width: 1),
+            top: BorderSide(
+              color: AppColors.borderSubtle,
+              width: 1.r,
+            ),
           ),
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: (index) => setState(() => _currentIndex = index),
-          backgroundColor: AppColors.surface,
-          selectedItemColor: AppColors.ember,
-          unselectedItemColor: AppColors.slate,
-          selectedLabelStyle: AppTextStyles.labelMedium(color: AppColors.ember),
-          unselectedLabelStyle: AppTextStyles.labelMedium(color: AppColors.slate),
+          backgroundColor: AppColors.surfaceCard,
+          selectedItemColor: AppColors.primaryAction,
+          unselectedItemColor: AppColors.textMuted,
+          selectedLabelStyle: AppTextStyles.caption.copyWith(
+            fontWeight: FontWeight.w700,
+            color: AppColors.primaryAction,
+          ),
+          unselectedLabelStyle: AppTextStyles.caption.copyWith(
+            color: AppColors.textMuted,
+          ),
           type: BottomNavigationBarType.fixed,
           elevation: 0,
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.auto_awesome_outlined),
-              activeIcon: Icon(Icons.auto_awesome, color: AppColors.ember),
+              icon: Icon(Icons.auto_awesome_outlined, size: 20.r),
+              activeIcon: Icon(Icons.auto_awesome_rounded,
+                  size: 20.r, color: AppColors.primaryAction),
               label: AppStrings.tabGenerate,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.grid_view_outlined),
-              activeIcon: Icon(Icons.grid_view, color: AppColors.ember),
+              icon: Icon(Icons.grid_view_outlined, size: 20.r),
+              activeIcon: Icon(Icons.grid_view_rounded,
+                  size: 20.r, color: AppColors.primaryAction),
               label: AppStrings.tabGallery,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.account_balance_wallet_outlined),
-              activeIcon:
-                  Icon(Icons.account_balance_wallet, color: AppColors.ember),
+              icon: Icon(Icons.account_balance_wallet_outlined, size: 20.r),
+              activeIcon: Icon(Icons.account_balance_wallet_rounded,
+                  size: 20.r, color: AppColors.primaryAction),
               label: AppStrings.tabWallet,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person, color: AppColors.ember),
+              icon: Icon(Icons.person_outline_rounded, size: 20.r),
+              activeIcon: Icon(Icons.person_rounded,
+                  size: 20.r, color: AppColors.primaryAction),
               label: AppStrings.tabProfile,
             ),
           ],
@@ -134,7 +169,7 @@ class _HomeShellViewState extends State<HomeShellView> {
   }
 }
 
-// ── Tab Placeholders (Dev #2 / Phase 2 will populate) ───────────────────────
+// ─── Tab Placeholders ────────────────────────────────────────────────────────
 
 class _GenerateTabPlaceholder extends StatelessWidget {
   const _GenerateTabPlaceholder();
@@ -145,16 +180,35 @@ class _GenerateTabPlaceholder extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.auto_awesome, size: 48, color: AppColors.ember),
-          const SizedBox(height: 16),
-          Text(
-            'Generation Studio Canvas',
-            style: AppTextStyles.headingMedium(),
+          Container(
+            width: 64.r,
+            height: 64.r,
+            decoration: BoxDecoration(
+              gradient: AppColors.aiActionGradient,
+              borderRadius: BorderRadius.circular(16.r),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.accentGlowSoft,
+                  blurRadius: 16.r,
+                  spreadRadius: 2.r,
+                )
+              ],
+            ),
+            child: Icon(
+              Icons.auto_awesome_rounded,
+              size: 32.r,
+              color: Colors.white,
+            ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 20.h),
           Text(
-            'Flutter Dev #2 — Editor Canvas & Preset Library',
-            style: AppTextStyles.bodySmall(color: AppColors.slate),
+            AppStrings.generationCanvasTitle,
+            style: AppTextStyles.headingL,
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            AppStrings.generationCanvasSubtitle,
+            style: AppTextStyles.bodyM.copyWith(color: AppColors.textMuted),
           ),
         ],
       ),
@@ -171,16 +225,16 @@ class _GalleryTabPlaceholder extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.grid_view, size: 48, color: AppColors.slate),
-          const SizedBox(height: 16),
+          Icon(Icons.grid_view_rounded, size: 48.r, color: AppColors.textMuted),
+          SizedBox(height: 16.h),
           Text(
             AppStrings.tabGallery,
-            style: AppTextStyles.headingMedium(),
+            style: AppTextStyles.headingL,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
           Text(
-            'Your generated images and 3D models',
-            style: AppTextStyles.bodySmall(color: AppColors.slate),
+            AppStrings.galleryTabSubtitle,
+            style: AppTextStyles.bodyM.copyWith(color: AppColors.textMuted),
           ),
         ],
       ),
@@ -197,17 +251,17 @@ class _WalletTabPlaceholder extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.account_balance_wallet,
-              size: 48, color: AppColors.ember),
-          const SizedBox(height: 16),
+          Icon(Icons.account_balance_wallet_rounded,
+              size: 48.r, color: AppColors.primaryAction),
+          SizedBox(height: 16.h),
           Text(
             AppStrings.walletTitle,
-            style: AppTextStyles.headingMedium(),
+            style: AppTextStyles.headingL,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
           Text(
-            'Credit balance and transaction history',
-            style: AppTextStyles.bodySmall(color: AppColors.slate),
+            AppStrings.walletTabSubtitle,
+            style: AppTextStyles.bodyM.copyWith(color: AppColors.textMuted),
           ),
         ],
       ),
@@ -226,16 +280,26 @@ class _ProfileTabPlaceholder extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.person, size: 48, color: AppColors.slate),
-          const SizedBox(height: 16),
+          Container(
+            width: 60.r,
+            height: 60.r,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceInput,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.borderSubtle, width: 1.r),
+            ),
+            child: Icon(Icons.person_rounded,
+                size: 32.r, color: AppColors.primaryAction),
+          ),
+          SizedBox(height: 16.h),
           Obx(() => Text(
-                authCtrl.currentUser.value?.displayName ?? 'User Profile',
-                style: AppTextStyles.headingMedium(),
+                authCtrl.currentUser.value?.displayName ?? AppStrings.userProfile,
+                style: AppTextStyles.headingL,
               )),
-          const SizedBox(height: 4),
+          SizedBox(height: 4.h),
           Obx(() => Text(
                 authCtrl.currentUser.value?.email ?? '',
-                style: AppTextStyles.bodySmall(color: AppColors.slate),
+                style: AppTextStyles.bodyM.copyWith(color: AppColors.textMuted),
               )),
         ],
       ),

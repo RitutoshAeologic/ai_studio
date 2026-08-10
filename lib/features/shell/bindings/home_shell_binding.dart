@@ -1,12 +1,12 @@
+import 'package:ai_studio/core/services/api_service.dart';
+import 'package:ai_studio/data/repositories/job_repository_impl.dart';
+import 'package:ai_studio/data/repositories/wallet_repository_impl.dart';
+import 'package:ai_studio/domain/repositories/job_repository.dart';
+import 'package:ai_studio/domain/repositories/wallet_repository.dart';
+import 'package:ai_studio/features/auth/controllers/auth_controller.dart';
+import 'package:ai_studio/features/jobs/controllers/job_controller.dart';
+import 'package:ai_studio/features/wallet/controllers/wallet_controller.dart';
 import 'package:get/get.dart';
-import '../../../core/services/api_service.dart';
-import '../../../data/repositories/job_repository_impl.dart';
-import '../../../data/repositories/wallet_repository_impl.dart';
-import '../../../domain/repositories/job_repository.dart';
-import '../../../domain/repositories/wallet_repository.dart';
-import '../../../features/auth/controllers/auth_controller.dart';
-import '../../../features/jobs/controllers/job_controller.dart';
-import '../../../features/wallet/controllers/wallet_controller.dart';
 
 /// Bindings injected when the HomeShell route is entered.
 /// Lazily creates WalletController and JobController — not instantiated globally.

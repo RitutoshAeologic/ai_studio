@@ -1,10 +1,11 @@
 import 'dart:async';
+import 'package:ai_studio/core/error/error_handler.dart';
+import 'package:ai_studio/core/services/api_service.dart';
+import 'package:ai_studio/core/utils/logger.dart';
+import 'package:ai_studio/domain/entities/job_entity.dart';
+import 'package:ai_studio/domain/repositories/job_repository.dart';
 import 'package:get/get.dart';
-import '../../../core/error/error_handler.dart';
-import '../../../core/services/api_service.dart';
-import '../../../core/utils/logger.dart';
-import '../../../domain/entities/job_entity.dart';
-import '../../../domain/repositories/job_repository.dart';
+
 
 /// Job state machine controller.
 ///

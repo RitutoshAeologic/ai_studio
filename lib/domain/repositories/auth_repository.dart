@@ -1,6 +1,7 @@
-import '../../core/error/failure.dart';
-import '../../core/error/result.dart';
-import '../entities/user_entity.dart';
+
+import 'package:ai_studio/core/error/failure.dart';
+import 'package:ai_studio/core/error/result.dart';
+import 'package:ai_studio/domain/entities/user_entity.dart';
 
 /// Abstract domain contract for authentication and user session management.
 abstract class AuthRepository {

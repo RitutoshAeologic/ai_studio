@@ -1,13 +1,14 @@
 import 'dart:async';
+import 'package:ai_studio/app/routes/app_routes.dart';
+import 'package:ai_studio/core/constants/app_strings.dart';
+import 'package:ai_studio/core/error/error_handler.dart';
+import 'package:ai_studio/core/utils/logger.dart';
+import 'package:ai_studio/domain/entities/user_entity.dart';
+import 'package:ai_studio/domain/repositories/auth_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../app/routes/app_routes.dart';
-import '../../../core/constants/app_strings.dart';
-import '../../../core/error/error_handler.dart';
-import '../../../core/utils/logger.dart';
-import '../../../domain/entities/user_entity.dart';
-import '../../../domain/repositories/auth_repository.dart';
+
 
 /// Controller for authentication flow.
 /// Coordinates Firebase Auth repository operations and real-time form validation state management.

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:get/get.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/aperture_indicator.dart';
 import '../../features/auth/views/login_view.dart';
@@ -17,12 +19,12 @@ abstract class AppPages {
     // Splash screen with signature ApertureIndicator loading widget
     GetPage(
       name: AppRoutes.splash,
-      page: () => const Scaffold(
-        backgroundColor: AppColors.ink,
+      page: () => Scaffold(
+        backgroundColor: AppColors.bgApp,
         body: Center(
           child: ApertureIndicator(
-            size: 64,
-            color: AppColors.ember,
+            size: 64.r,
+            color: AppColors.primaryAction,
             state: ApertureState.open,
           ),
         ),

@@ -1,6 +1,6 @@
-import '../../core/error/failure.dart';
-import '../../core/error/result.dart';
-import '../entities/job_entity.dart';
+import 'package:ai_studio/core/error/failure.dart';
+import 'package:ai_studio/core/error/result.dart';
+import 'package:ai_studio/domain/entities/job_entity.dart';
 
 /// Abstract domain contract for the job state stream.
 /// Flutter Dev #2 consumes JobController's public API — they never touch this directly.

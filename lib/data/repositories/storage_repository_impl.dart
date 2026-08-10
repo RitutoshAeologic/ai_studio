@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:ai_studio/core/constants/app_strings.dart';
+import 'package:ai_studio/domain/repositories/storage_repository.dart';
 import 'package:firebase_storage/firebase_storage.dart' as fs;
-import '../../core/constants/app_strings.dart';
-import '../../core/error/failure.dart';
-import '../../core/error/result.dart';
-import '../../core/utils/logger.dart';
-import '../../domain/repositories/storage_repository.dart';
+import 'package:ai_studio/core/error/failure.dart';
+import 'package:ai_studio/core/error/result.dart';
+import 'package:ai_studio/core/utils/logger.dart';
 
 /// Implementation of StorageRepository connecting Firebase Storage SDK.
 class StorageRepositoryImpl implements StorageRepository {

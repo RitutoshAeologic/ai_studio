@@ -1,9 +1,9 @@
 import 'dart:async';
+import 'package:ai_studio/core/error/error_handler.dart';
+import 'package:ai_studio/core/utils/logger.dart';
+import 'package:ai_studio/domain/entities/wallet_entity.dart';
+import 'package:ai_studio/domain/repositories/wallet_repository.dart';
 import 'package:get/get.dart';
-import '../../../core/error/error_handler.dart';
-import '../../../core/utils/logger.dart';
-import '../../../domain/entities/wallet_entity.dart';
-import '../../../domain/repositories/wallet_repository.dart';
 
 /// Reactive credit wallet controller.
 ///
