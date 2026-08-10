@@ -49,6 +49,8 @@ class JobController extends GetxController {
 
   StreamSubscription? _jobSubscription;
 
+  final RxInt lastJobCost = 0.obs;
+
   // ── Public methods ─────────────────────────────────────────────────────────
 
   /// Submit a new job. Returns the jobId on success or null on failure.
@@ -62,9 +64,10 @@ class JobController extends GetxController {
     isSubmitting.value = false;
 
     return result.fold(
-      (jobId) {
-        Logger.i('Job submitted: $jobId');
-        return jobId;
+      (response) {
+        lastJobCost.value = response.cost;
+        Logger.i('Job submitted: ${response.jobId}, cost: ${response.cost}');
+        return response.jobId;
       },
       (failure) {
         submissionError.value = ErrorHandler.map(failure);

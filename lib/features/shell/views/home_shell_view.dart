@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:get/get.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
@@ -7,6 +8,9 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../wallet/views/wallet_debug_view.dart';
 import '../widgets/credit_badge_widget.dart';
+
+import '../../generate/views/generation_studio_view.dart';
+import 'gallery_tab_view.dart';
 
 class HomeShellView extends StatefulWidget {
   const HomeShellView({super.key});
@@ -19,8 +23,8 @@ class _HomeShellViewState extends State<HomeShellView> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = const [
-    _GenerateTabPlaceholder(),
-    _GalleryTabPlaceholder(),
+    GenerationStudioView(),
+    GalleryTabView(),
     _WalletTabPlaceholder(),
     _ProfileTabPlaceholder(),
   ];
@@ -40,15 +44,15 @@ class _HomeShellViewState extends State<HomeShellView> {
         title: Row(
           children: [
             Container(
-              width: 24,
-              height: 24,
+              width: 28.r,
+              height: 28.r,
               decoration: const BoxDecoration(
                 color: AppColors.ember,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.auto_awesome, size: 14, color: AppColors.bone),
+              child: Icon(Icons.auto_awesome, size: 16.r, color: AppColors.bone),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8.w),
             Text(
               AppStrings.appName,
               style: AppTextStyles.headingSmall(),
@@ -57,27 +61,27 @@ class _HomeShellViewState extends State<HomeShellView> {
         ),
         actions: [
           // Persistent Credit Badge Widget (Task F1.2)
-          const Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: CreditBadge(),
+          Padding(
+            padding: EdgeInsets.only(right: 8.w),
+            child: const CreditBadge(),
           ),
 
           // Debug-only wallet inspector modal (Task F1.2)
           if (kDebugMode)
             IconButton(
-              icon: const Icon(Icons.bug_report_outlined,
-                  color: AppColors.statusWarning, size: 20),
+              icon: Icon(Icons.bug_report_outlined,
+                  color: AppColors.statusWarning, size: 20.r),
               tooltip: AppStrings.walletDebugTitle,
               onPressed: () => WalletDebugView.show(context),
             ),
 
           IconButton(
-            icon: const Icon(Icons.logout_outlined,
-                color: AppColors.slate, size: 20),
+            icon: Icon(Icons.logout_outlined,
+                color: AppColors.slate, size: 20.r),
             tooltip: 'Sign Out',
             onPressed: () => authCtrl.signOut(),
           ),
-          const SizedBox(width: 4),
+          SizedBox(width: 4.w),
         ],
       ),
 
@@ -134,59 +138,7 @@ class _HomeShellViewState extends State<HomeShellView> {
   }
 }
 
-// ── Tab Placeholders (Dev #2 / Phase 2 will populate) ───────────────────────
-
-class _GenerateTabPlaceholder extends StatelessWidget {
-  const _GenerateTabPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.auto_awesome, size: 48, color: AppColors.ember),
-          const SizedBox(height: 16),
-          Text(
-            'Generation Studio Canvas',
-            style: AppTextStyles.headingMedium(),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Flutter Dev #2 — Editor Canvas & Preset Library',
-            style: AppTextStyles.bodySmall(color: AppColors.slate),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _GalleryTabPlaceholder extends StatelessWidget {
-  const _GalleryTabPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.grid_view, size: 48, color: AppColors.slate),
-          const SizedBox(height: 16),
-          Text(
-            AppStrings.tabGallery,
-            style: AppTextStyles.headingMedium(),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Your generated images and 3D models',
-            style: AppTextStyles.bodySmall(color: AppColors.slate),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// ── Tab Placeholders ─────────────────────────────────────────────────────────
 
 class _WalletTabPlaceholder extends StatelessWidget {
   const _WalletTabPlaceholder();
@@ -197,14 +149,14 @@ class _WalletTabPlaceholder extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.account_balance_wallet,
-              size: 48, color: AppColors.ember),
-          const SizedBox(height: 16),
+          Icon(Icons.account_balance_wallet,
+              size: 48.r, color: AppColors.ember),
+          SizedBox(height: 16.h),
           Text(
             AppStrings.walletTitle,
             style: AppTextStyles.headingMedium(),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
           Text(
             'Credit balance and transaction history',
             style: AppTextStyles.bodySmall(color: AppColors.slate),
@@ -226,13 +178,13 @@ class _ProfileTabPlaceholder extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.person, size: 48, color: AppColors.slate),
-          const SizedBox(height: 16),
+          Icon(Icons.person, size: 48.r, color: AppColors.slate),
+          SizedBox(height: 16.h),
           Obx(() => Text(
                 authCtrl.currentUser.value?.displayName ?? 'User Profile',
                 style: AppTextStyles.headingMedium(),
               )),
-          const SizedBox(height: 4),
+          SizedBox(height: 4.h),
           Obx(() => Text(
                 authCtrl.currentUser.value?.email ?? '',
                 style: AppTextStyles.bodySmall(color: AppColors.slate),

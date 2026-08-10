@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:get/get.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/unfocus_on_tap.dart';
 import '../controllers/auth_controller.dart';
 
 class SignupView extends GetView<AuthController> {
@@ -18,15 +20,16 @@ class SignupView extends GetView<AuthController> {
     final passwordCtrl = controller.signupPasswordCtrl;
     final confirmCtrl = controller.signupConfirmPasswordCtrl;
 
-    return Scaffold(
-      backgroundColor: AppColors.ink,
-      body: SafeArea(
+    return UnfocusOnTap(
+      child: Scaffold(
+        backgroundColor: AppColors.ink,
+        body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
 
               // ── Back button ───────────────────────────────────────────────
               GestureDetector(
@@ -38,49 +41,49 @@ class SignupView extends GetView<AuthController> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.arrow_back_ios_new,
-                        size: 16, color: AppColors.slate),
-                    const SizedBox(width: 4),
+                    Icon(Icons.arrow_back_ios_new,
+                        size: 16.r, color: AppColors.slate),
+                    SizedBox(width: 4.w),
                     Text(AppStrings.back,
                         style: AppTextStyles.labelMedium(color: AppColors.slate)),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
 
               // ── Headline ──────────────────────────────────────────────────
               Text(AppStrings.createAccountTitle,
                   style: AppTextStyles.displayLarge()),
-              const SizedBox(height: 4),
+              SizedBox(height: 4.h),
               Text(AppStrings.signUpSubtitle,
                   style: AppTextStyles.bodyMedium(color: AppColors.slate)),
 
-              const SizedBox(height: 4),
+              SizedBox(height: 4.h),
 
               // ── Free Credits Badge ────────────────────────────────────────
               Container(
-                margin: const EdgeInsets.only(top: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                margin: EdgeInsets.only(top: 4.h),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
                   color: AppColors.emberSoft,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(8.r),
                   border: Border.all(
                       color: AppColors.ember.withAlpha(60)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.bolt_rounded,
-                        color: AppColors.ember, size: 16),
-                    const SizedBox(width: 6),
+                    Icon(Icons.bolt_rounded,
+                        color: AppColors.ember, size: 16.r),
+                    SizedBox(width: 6.w),
                     Text(AppStrings.freeCreditsBadgeTitle,
                         style: AppTextStyles.labelMedium(color: AppColors.ember)),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
 
               // ── Form ──────────────────────────────────────────────────────
               Obx(() => AppTextField(
@@ -93,7 +96,7 @@ class SignupView extends GetView<AuthController> {
                     onChanged: (_) => controller.validateSignupName(nameCtrl.text),
                   )),
 
-              const SizedBox(height: 10),
+              SizedBox(height: 10.h),
 
               Obx(() => AppTextField(
                     controller: emailCtrl,
@@ -106,7 +109,7 @@ class SignupView extends GetView<AuthController> {
                     onChanged: (_) => controller.validateSignupEmail(emailCtrl.text),
                   )),
 
-              const SizedBox(height: 10),
+              SizedBox(height: 10.h),
 
               Obx(() => AppTextField(
                     controller: passwordCtrl,
@@ -120,7 +123,7 @@ class SignupView extends GetView<AuthController> {
                         controller.validateSignupPassword(passwordCtrl.text),
                   )),
 
-              const SizedBox(height: 10),
+              SizedBox(height: 10.h),
 
               Obx(() => AppTextField(
                     controller: confirmCtrl,
@@ -139,7 +142,7 @@ class SignupView extends GetView<AuthController> {
                         confirmCtrl.text),
                   )),
 
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
 
               // ── Error Banner ──────────────────────────────────────────────
               Obx(() {
@@ -147,18 +150,18 @@ class SignupView extends GetView<AuthController> {
                   return const SizedBox.shrink();
                 }
                 return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  margin: EdgeInsets.only(bottom: 16.h),
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
                   decoration: BoxDecoration(
                     color: AppColors.statusErrorSoft,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(8.r),
                     border: Border.all(color: AppColors.statusError.withAlpha(80)),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline,
-                          color: AppColors.statusError, size: 16),
-                      const SizedBox(width: 8),
+                      Icon(Icons.error_outline,
+                          color: AppColors.statusError, size: 16.r),
+                      SizedBox(width: 8.w),
                       Expanded(
                         child: Text(controller.errorMessage.value,
                             style: AppTextStyles.bodySmall(
@@ -180,7 +183,7 @@ class SignupView extends GetView<AuthController> {
                         confirmCtrl.text),
                   )),
 
-              const SizedBox(height: 10),
+              SizedBox(height: 10.h),
 
               // ── Terms ─────────────────────────────────────────────────────
               Center(
@@ -191,7 +194,7 @@ class SignupView extends GetView<AuthController> {
                 ),
               ),
 
-              const SizedBox(height: 12),
+              SizedBox(height: 12.h),
 
               // ── Sign In Link ──────────────────────────────────────────────
               Center(
@@ -214,9 +217,10 @@ class SignupView extends GetView<AuthController> {
                 ),
               ),
 
-              const SizedBox(height: 24),
+              SizedBox(height: 24.h),
             ],
           ),
+        ),
         ),
       ),
     );

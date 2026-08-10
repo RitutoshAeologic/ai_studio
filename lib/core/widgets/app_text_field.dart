@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
 
@@ -81,16 +82,16 @@ class _AppTextFieldState extends State<AppTextField> {
             color: _hasFocus ? AppColors.ember : AppColors.slate,
           ),
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: 6.h),
         AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           decoration: BoxDecoration(
             color: AppColors.surfaceInput,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(10.r),
             border: Border.all(color: borderColor, width: _hasFocus ? 1.5 : 1),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(9),
+            borderRadius: BorderRadius.circular(9.r),
             child: TextFormField(
               controller: widget.controller,
               focusNode: _focusNode,
@@ -113,15 +114,15 @@ class _AppTextFieldState extends State<AppTextField> {
                 disabledBorder: InputBorder.none,
                 filled: true,
                 fillColor: AppColors.surfaceInput,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 14,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 14.w,
+                  vertical: 14.h,
                 ),
                 prefixIcon: widget.prefixIcon != null
                     ? Icon(
                         widget.prefixIcon,
                         color: _hasFocus ? AppColors.ember : AppColors.slate,
-                        size: 20,
+                        size: 20.r,
                       )
                     : null,
                 suffixIcon: widget.isObscure
@@ -132,7 +133,7 @@ class _AppTextFieldState extends State<AppTextField> {
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
                           color: AppColors.slate,
-                          size: 20,
+                          size: 20.r,
                         ),
                       )
                     : null,
@@ -146,15 +147,15 @@ class _AppTextFieldState extends State<AppTextField> {
           child: hasError
               ? Padding(
                   key: ValueKey(widget.errorText),
-                  padding: const EdgeInsets.only(top: 5, left: 2),
+                  padding: EdgeInsets.only(top: 5.h, left: 2.w),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.error_outline,
-                        size: 13,
+                        size: 13.r,
                         color: AppColors.statusError,
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4.w),
                       Expanded(
                         child: Text(
                           widget.errorText!,

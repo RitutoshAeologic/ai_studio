@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
 import 'aperture_indicator.dart';
@@ -13,7 +14,7 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.isEnabled = true,
     this.width,
-    this.height = 52,
+    this.height,
     this.borderRadius = 10,
     this.color,
   });
@@ -23,7 +24,7 @@ class AppButton extends StatelessWidget {
   final bool isLoading;
   final bool isEnabled;
   final double? width;
-  final double height;
+  final double? height;
   final double borderRadius;
   final Color? color;
 
@@ -37,19 +38,19 @@ class AppButton extends StatelessWidget {
       duration: const Duration(milliseconds: 200),
       child: SizedBox(
         width: width ?? double.infinity,
-        height: height,
+        height: height ?? 52.h,
         child: Material(
           color: bgColor,
-          borderRadius: BorderRadius.circular(borderRadius),
+          borderRadius: BorderRadius.circular(borderRadius.r),
           child: InkWell(
             onTap: isActive ? onPressed : null,
-            borderRadius: BorderRadius.circular(borderRadius),
+            borderRadius: BorderRadius.circular(borderRadius.r),
             splashColor: AppColors.emberPressed.withAlpha(80),
             highlightColor: AppColors.emberPressed.withAlpha(40),
             child: Center(
               child: isLoading
-                  ? const ApertureIndicator(
-                      size: 28,
+                  ? ApertureIndicator(
+                      size: 28.r,
                       color: AppColors.bone,
                       state: ApertureState.open,
                     )
@@ -73,20 +74,20 @@ class AppOutlinedButton extends StatelessWidget {
     required this.onPressed,
     this.isEnabled = true,
     this.width,
-    this.height = 52,
+    this.height,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool isEnabled;
   final double? width;
-  final double height;
+  final double? height;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: width ?? double.infinity,
-      height: height,
+      height: height ?? 52.h,
       child: OutlinedButton(
         onPressed: isEnabled ? onPressed : null,
         style: OutlinedButton.styleFrom(
@@ -94,7 +95,7 @@ class AppOutlinedButton extends StatelessWidget {
             color: isEnabled ? AppColors.ember : AppColors.borderSubtle,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(10.r),
           ),
           foregroundColor: AppColors.ember,
         ),

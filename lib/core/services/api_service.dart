@@ -7,6 +7,37 @@ import '../../core/error/result.dart';
 import '../../core/utils/logger.dart';
 import '../../domain/entities/job_entity.dart';
 
+/// Lean response payload from POST /v1/generateJob.
+/// Server returns `{ jobId, status, cost, createdAt }`.
+class GenerateJobResponse {
+  final String jobId;
+  final String status;
+  final int cost;
+  final DateTime? createdAt;
+
+  const GenerateJobResponse({
+    required this.jobId,
+    required this.status,
+    required this.cost,
+    this.createdAt,
+  });
+
+  factory GenerateJobResponse.fromJson(Map<String, dynamic> json) {
+    DateTime? dt;
+    if (json['createdAt'] != null) {
+      if (json['createdAt'] is String) {
+        dt = DateTime.tryParse(json['createdAt'] as String);
+      }
+    }
+    return GenerateJobResponse(
+      jobId: json['jobId'] as String? ?? '',
+      status: json['status'] as String? ?? 'pending',
+      cost: (json['cost'] as num?)?.toInt() ?? 0,
+      createdAt: dt,
+    );
+  }
+}
+
 /// Request payload for POST /v1/generateJob.
 class GenerateJobRequest {
   final JobType jobType;
@@ -28,17 +59,19 @@ class GenerateJobRequest {
 
 /// Single HTTP client for all backend API calls.
 ///
-/// This is the ONLY place in the Flutter app that talks to the backend REST API.
-/// Flutter Dev #2 calls this service via JobController — never directly.
-///
-/// NOTE: Base URL is a placeholder until the backend team delivers the Cloud Run endpoint.
-/// Set [_useStub] to true for local development/testing without a live backend.
+/// **SECURITY NOTE FOR BACKEND DEV**:
+/// `GET /wallet/{user_id}` currently lacks authorization header verification on the live backend,
+/// unlike `/v1/generateJob` and `/jobs` which both enforce Authorization Bearer tokens.
+/// Any client can read any user's balance by probing a user_id path. Please add Authorization
+/// header checking or rely purely on Firestore real-time security rules for wallet reads.
 class ApiService {
-  static const String _placeholderBaseUrl =
-      'https://api.aistudio.example.com'; // ← Replace with real URL when backend delivers
+  /// Live backend URL — ngrok free tunnel for active testing.
+  /// (Must be swapped for stable Cloud Run URL in production builds).
+  static const String _liveBaseUrl =
+      'https://handoff-plural-concise.ngrok-free.dev';
 
-  /// Toggle to true to return stub responses during development.
-  static const bool _useStub = kDebugMode;
+  /// Set to false to interact directly with the live ngrok backend.
+  static const bool _useStub = false;
 
   final Dio _dio;
   final fb.FirebaseAuth _firebaseAuth;
@@ -46,7 +79,7 @@ class ApiService {
   ApiService({fb.FirebaseAuth? firebaseAuth})
       : _firebaseAuth = firebaseAuth ?? fb.FirebaseAuth.instance,
         _dio = Dio(BaseOptions(
-          baseUrl: _placeholderBaseUrl,
+          baseUrl: _liveBaseUrl,
           connectTimeout: const Duration(seconds: 15),
           receiveTimeout: const Duration(seconds: 30),
           headers: {'Content-Type': 'application/json'},
@@ -69,13 +102,18 @@ class ApiService {
 
   /// POST /v1/generateJob
   ///
-  /// Returns [Result.success] with the created jobId, or [Result.error] on failure.
-  Future<Result<String, Failure>> generateJob(GenerateJobRequest request) async {
+  /// Returns [Result.success] with [GenerateJobResponse], or [Result.error] on failure.
+  Future<Result<GenerateJobResponse, Failure>> generateJob(
+      GenerateJobRequest request) async {
     if (_useStub) {
-      // Stub: return a fake jobId for local development.
-      Logger.w('[ApiService STUB] generateJob called — returning mock jobId');
+      Logger.w('[ApiService STUB] generateJob called — returning mock response');
       await Future.delayed(const Duration(milliseconds: 400));
-      return const Success('stub_job_${0}');
+      return Success(GenerateJobResponse(
+        jobId: 'stub_job_${DateTime.now().millisecondsSinceEpoch}',
+        status: 'pending',
+        cost: 10,
+        createdAt: DateTime.now(),
+      ));
     }
 
     try {
@@ -90,13 +128,15 @@ class ApiService {
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
-      final jobId = response.data['jobId'] as String?;
-      if (jobId == null || jobId.isEmpty) {
-        return const Error(NetworkFailure('Invalid server response: missing jobId'));
+      final data = response.data as Map<String, dynamic>?;
+      if (data == null || data['jobId'] == null) {
+        return const Error(
+            NetworkFailure('Invalid server response: missing jobId'));
       }
 
-      Logger.i('Job created: $jobId');
-      return Success(jobId);
+      final jobResp = GenerateJobResponse.fromJson(data);
+      Logger.i('Job created: ${jobResp.jobId}, cost: ${jobResp.cost}');
+      return Success(jobResp);
     } on DioException catch (e, st) {
       Logger.e('API error on generateJob', e, st);
       final msg = e.response?.data?['message'] as String?;
