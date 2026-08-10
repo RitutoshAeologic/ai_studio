@@ -128,24 +128,29 @@ class AuthController extends GetxController {
     isLoginLoading.value = true;
     errorMessage.value = '';
 
-    final result = await _authRepository.signInWithEmail(
-      email: email.trim(),
-      password: password,
-    );
+    try {
+      final result = await _authRepository.signInWithEmail(
+        email: email.trim(),
+        password: password,
+      );
 
-    result.fold(
-      (user) {
-        Logger.i('User signed in successfully: ${user.uid}');
-        currentUser.value = user;
-        unawaited(Get.offAllNamed(AppRoutes.homeShell));
-      },
-      (failure) {
-        Logger.w('Sign in failed: ${failure.message}');
-        errorMessage.value = ErrorHandler.map(failure);
-      },
-    );
-
-    isLoginLoading.value = false;
+      result.fold(
+        (user) {
+          Logger.i('User signed in successfully: ${user.uid}');
+          currentUser.value = user;
+          unawaited(Get.offAllNamed(AppRoutes.homeShell));
+        },
+        (failure) {
+          Logger.w('Sign in failed: ${failure.message}');
+          errorMessage.value = ErrorHandler.map(failure);
+        },
+      );
+    } catch (e, stackTrace) {
+      Logger.e('Unhandled error in signInWithEmail', e, stackTrace);
+      errorMessage.value = AppStrings.unknownError;
+    } finally {
+      isLoginLoading.value = false;
+    }
   }
 
   Future<void> signUpWithEmail(
@@ -155,25 +160,30 @@ class AuthController extends GetxController {
     isSignupLoading.value = true;
     errorMessage.value = '';
 
-    final result = await _authRepository.signUpWithEmail(
-      name: name.trim(),
-      email: email.trim(),
-      password: password,
-    );
+    try {
+      final result = await _authRepository.signUpWithEmail(
+        name: name.trim(),
+        email: email.trim(),
+        password: password,
+      );
 
-    result.fold(
-      (user) {
-        Logger.i('User registered successfully: ${user.uid}');
-        currentUser.value = user;
-        unawaited(Get.offAllNamed(AppRoutes.homeShell));
-      },
-      (failure) {
-        Logger.w('Sign up failed: ${failure.message}');
-        errorMessage.value = ErrorHandler.map(failure);
-      },
-    );
-
-    isSignupLoading.value = false;
+      result.fold(
+        (user) {
+          Logger.i('User registered successfully: ${user.uid}');
+          currentUser.value = user;
+          unawaited(Get.offAllNamed(AppRoutes.homeShell));
+        },
+        (failure) {
+          Logger.w('Sign up failed: ${failure.message}');
+          errorMessage.value = ErrorHandler.map(failure);
+        },
+      );
+    } catch (e, stackTrace) {
+      Logger.e('Unhandled error in signUpWithEmail', e, stackTrace);
+      errorMessage.value = AppStrings.unknownError;
+    } finally {
+      isSignupLoading.value = false;
+    }
   }
 
   Future<void> signOut() async {

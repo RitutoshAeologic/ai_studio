@@ -61,4 +61,16 @@ abstract class AppStrings {
   static const String unknownError = 'Something went wrong. Please try again.';
   static const String invalidEmailOrPassword = 'Invalid email or password. Please try again.';
   static const String signUpFailedEmailInUse = 'Sign up failed. The email may already be in use.';
+
+  // Image Validation Errors
+  static const String imageInvalidFormat = 'Unsupported image format. Please select a JPEG, PNG, or WEBP image.';
+  static const String imageTooSmall = 'Image file is too small or empty. Please select a valid image.';
+  static const String imageTooLarge = 'Image file exceeds the 20MB limit. Please select a smaller file.';
+  static const String imageLowResolution = 'Image resolution is too low. Minimum required resolution is 256x256 pixels.';
+  static const String imageHighResolution = 'Image resolution exceeds 4096x4096 pixels. Please select a smaller image.';
+  static const String imageCorrupted = 'Corrupted or unreadable image file. Please select a different image.';
+  static const String imageBlankOrExtremeBrightness = 'This image appears to be blank or too dark/bright. Please select a different image.';
+  static const String imageNoSubjectDetected = 'No usable subject detected. Please select an image containing a clear object or person.';
+  static const String imageTooBlurry = 'This image is too blurry for AI processing. Please select a sharper image.';
+  static const String imageLowContrast = 'This image lacks visual detail or contrast. Please select a clearer image.';
 }

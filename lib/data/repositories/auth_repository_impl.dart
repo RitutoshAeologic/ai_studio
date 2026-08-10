@@ -76,16 +76,24 @@ class AuthRepositoryImpl implements AuthRepository {
         return const Error(AuthFailure(AppStrings.invalidEmailOrPassword));
       }
 
-      // Fetch or sync user doc in Firestore
-      final userDocRef = _firestore.collection('users').doc(fbUser.uid);
-      final docSnap = await userDocRef.get();
-
       UserModel userModel;
-      if (docSnap.exists) {
-        userModel = UserModel.fromFirestore(docSnap);
-      } else {
+      try {
+        // Attempt to fetch or sync user doc in Firestore (non-fatal if Firestore database doesn't exist yet)
+        final userDocRef = _firestore.collection('users').doc(fbUser.uid);
+        final docSnap = await userDocRef.get().timeout(const Duration(seconds: 4));
+
+        if (docSnap.exists) {
+          userModel = UserModel.fromFirestore(docSnap);
+        } else {
+          userModel = UserModel.fromFirebaseUser(fbUser);
+          await userDocRef
+              .set(userModel.toFirestore(), SetOptions(merge: true))
+              .timeout(const Duration(seconds: 4));
+        }
+      } catch (e, stackTrace) {
+        Logger.w('Firestore sync skipped or unavailable: $e', e, stackTrace);
+        // Fall back gracefully to Firebase Auth user metadata
         userModel = UserModel.fromFirebaseUser(fbUser);
-        await userDocRef.set(userModel.toFirestore(), SetOptions(merge: true));
       }
 
       Logger.i('Successfully signed in user: ${userModel.uid}');
@@ -95,7 +103,7 @@ class AuthRepositoryImpl implements AuthRepository {
       return Error(AuthFailure(_mapFirebaseAuthError(e.code)));
     } catch (e, stackTrace) {
       Logger.e('Unexpected error during sign-in', e, stackTrace);
-      return const Error(AuthFailure(AppStrings.unknownError));
+      return Error(AuthFailure(e.toString()));
     }
   }
 
@@ -129,26 +137,31 @@ class AuthRepositoryImpl implements AuthRepository {
         createdAt: DateTime.now(),
       );
 
-      // Create user document in Firestore `users/{uid}`
-      await _firestore
-          .collection('users')
-          .doc(fbUser.uid)
-          .set(userModel.toFirestore());
+      try {
+        // Attempt to create user & wallet docs in Firestore with a timeout
+        await _firestore
+            .collection('users')
+            .doc(fbUser.uid)
+            .set(userModel.toFirestore())
+            .timeout(const Duration(seconds: 4));
 
-      // Create wallet document in Firestore `wallets/{uid}`
-      await _firestore
-          .collection('wallets')
-          .doc(fbUser.uid)
-          .set({'balance': 100, 'updatedAt': FieldValue.serverTimestamp()});
+        await _firestore
+            .collection('wallets')
+            .doc(fbUser.uid)
+            .set({'balance': 100, 'updatedAt': FieldValue.serverTimestamp()})
+            .timeout(const Duration(seconds: 4));
+      } catch (e, stackTrace) {
+        Logger.w('Firestore user/wallet creation skipped or database unavailable: $e', e, stackTrace);
+      }
 
-      Logger.i('Successfully created user account & wallet: ${userModel.uid}');
+      Logger.i('Successfully created user account: ${userModel.uid}');
       return Success(userModel);
     } on fb.FirebaseAuthException catch (e, stackTrace) {
       Logger.e('FirebaseAuthException during sign-up: ${e.code}', e, stackTrace);
       return Error(AuthFailure(_mapFirebaseAuthError(e.code)));
     } catch (e, stackTrace) {
       Logger.e('Unexpected error during sign-up', e, stackTrace);
-      return const Error(AuthFailure(AppStrings.unknownError));
+      return Error(AuthFailure(e.toString()));
     }
   }
 
@@ -160,7 +173,7 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Success(null);
     } catch (e, stackTrace) {
       Logger.e('Error signing out', e, stackTrace);
-      return const Error(AuthFailure(AppStrings.unknownError));
+      return Error(AuthFailure(e.toString()));
     }
   }
 
