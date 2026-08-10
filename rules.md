@@ -60,7 +60,12 @@ Future<void> submitJob() async {
 ## 5. Code Style
 
 - Files: `snake_case.dart`. Classes: `PascalCase`. Constants: `camelCase` (or `SCREAMING_CASE` only for true global constants in `app_strings.dart`/`app_colors.dart`).
-- No inline magic numbers/strings for colors, spacing, or repeated text — always reference `core/constants/`.
+- **Zero Hardcoded Constants Rule (Mandatory)**:
+  - All static user-facing strings MUST come from `AppStrings` (`lib/core/constants/app_strings.dart`).
+  - All colors MUST come from `AppColors` (`lib/core/constants/app_colors.dart`).
+  - All layout paddings, margins, and gaps MUST use `AppSpacing` (`lib/core/constants/app_spacing.dart`).
+  - All typography text styles MUST use `AppTextStyles` (`lib/core/constants/app_text_styles.dart`).
+  - Inline raw text strings, hardcoded `Color()` values, or raw magic numbers for styling are strictly forbidden.
 - No `// TODO` left in code merged to main — either resolved or tracked in `phases.md` / an issue tracker.
 - No commented-out dead code blocks — delete it, git history preserves it.
 - Prefer `const` constructors everywhere possible — flag any widget that could be `const` but isn't.

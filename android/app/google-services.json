@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "799730875496",
+    "project_id": "ai-studio-637ab",
+    "storage_bucket": "ai-studio-637ab.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:799730875496:android:e8b7285fc4a577daa30fdd",
+        "android_client_info": {
+          "package_name": "com.aistudio.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCjUwuHc-265GBzWY96CsUYgIK7WqwOHJE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

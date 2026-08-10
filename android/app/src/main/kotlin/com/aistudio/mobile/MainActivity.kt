@@ -1,4 +1,4 @@
-package com.example.ai_studio
+package com.aistudio.mobile
 
 import io.flutter.embedding.android.FlutterActivity
 
