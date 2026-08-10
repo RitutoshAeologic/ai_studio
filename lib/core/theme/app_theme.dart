@@ -1,45 +1,61 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
-import '../constants/app_text_styles.dart';
 
-/// Application Theme definition — Sleek Modern Light Theme.
+/// Application theme — Darkroom dark mode only.
 abstract class AppTheme {
-  static ThemeData get lightTheme {
+  static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.light,
-      scaffoldBackgroundColor: AppColors.bgApp,
-      colorScheme: const ColorScheme.light(
-        primary: AppColors.primaryAction,
-        secondary: AppColors.accentGlowEnd,
-        surface: AppColors.surfaceCard,
-        onSurface: AppColors.textPrimary,
-        error: AppColors.errorIndicator,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: AppColors.ink,
+      colorScheme: const ColorScheme.dark(
+        primary: AppColors.ember,
+        onPrimary: AppColors.bone,
+        secondary: AppColors.slate,
+        surface: AppColors.surface,
+        error: AppColors.statusError,
+        onSurface: AppColors.bone,
+        outline: AppColors.borderSubtle,
+      ),
+      textTheme: GoogleFonts.interTextTheme(
+        ThemeData.dark().textTheme.apply(
+              bodyColor: AppColors.bone,
+              displayColor: AppColors.bone,
+            ),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.bgApp,
+        backgroundColor: AppColors.ink,
         elevation: 0,
-        centerTitle: false,
-        titleTextStyle: AppTextStyles.headingM,
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
-        surfaceTintColor: Colors.transparent,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: AppColors.bone),
+        titleTextStyle: GoogleFonts.spaceGrotesk(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: AppColors.bone,
+        ),
+        systemOverlayStyle: SystemUiOverlayStyle.light.copyWith(
+          statusBarColor: Colors.transparent,
+        ),
       ),
-      cardTheme: CardThemeData(
-        color: AppColors.surfaceCard,
-        elevation: 1,
-        shadowColor: AppColors.primaryAction.withAlpha(20),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: AppColors.surface,
+        selectedItemColor: AppColors.ember,
+        unselectedItemColor: AppColors.slate,
+        elevation: 0,
+        type: BottomNavigationBarType.fixed,
+      ),
+      cardTheme: const CardThemeData(
+        color: AppColors.surface,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: AppColors.borderSubtle),
+          borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surfaceInput,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        hintStyle: AppTextStyles.bodyL.copyWith(color: AppColors.textMuted),
-        labelStyle: AppTextStyles.bodyM,
-        errorStyle: AppTextStyles.caption.copyWith(color: AppColors.errorIndicator),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: AppColors.borderSubtle),
@@ -50,27 +66,20 @@ abstract class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.borderFocus, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.ember, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.errorIndicator),
+          borderSide: const BorderSide(color: AppColors.statusError),
         ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.errorIndicator, width: 1.5),
-        ),
+        hintStyle: const TextStyle(color: AppColors.slate, fontSize: 14),
+        labelStyle: const TextStyle(color: AppColors.slate),
       ),
-      textTheme: TextTheme(
-        displayLarge: AppTextStyles.displayXL,
-        titleMedium: AppTextStyles.headingM,
-        bodyLarge: AppTextStyles.bodyL,
-        bodyMedium: AppTextStyles.bodyM,
-        bodySmall: AppTextStyles.caption,
-        labelLarge: AppTextStyles.buttonLabel,
+      dividerTheme: const DividerThemeData(
+        color: AppColors.borderSubtle,
+        thickness: 1,
+        space: 0,
       ),
     );
   }
-
-  static ThemeData get darkTheme => lightTheme;
 }

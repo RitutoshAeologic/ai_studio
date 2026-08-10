@@ -1,70 +1,111 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// Typography scale for AI Studio per ui_ux.md §3.3.
-/// Applies flutter_screenutil_plus .sp extension for responsive scaling.
+/// Typography system for AI Studio — Darkroom design direction.
+///
+/// Three-role pairing:
+///   SpaceGrotesk → Display / headings (geometric, "generation tool" feel)
+///   Inter        → Body / UI text (neutral, high-legibility at small sizes)
+///   JetBrainsMono → Credit counters, job IDs, status strings (system readout)
 abstract class AppTextStyles {
-  // Display
-  static TextStyle get displayXL => TextStyle(
-        fontSize: 32.sp,
+  // ── Display / Headings — Space Grotesk ─────────────────────────────────────
+  static TextStyle displayLarge({Color? color}) => GoogleFonts.spaceGrotesk(
+        fontSize: 32,
         fontWeight: FontWeight.w700,
-        height: 1.2,
-        color: AppColors.textPrimary,
         letterSpacing: -0.5,
+        color: color ?? AppColors.bone,
       );
 
-  // Headings
-  static TextStyle get headingL => TextStyle(
-        fontSize: 24.sp,
+  static TextStyle displayMedium({Color? color}) => GoogleFonts.spaceGrotesk(
+        fontSize: 26,
         fontWeight: FontWeight.w700,
-        height: 1.25,
-        color: AppColors.textPrimary,
         letterSpacing: -0.3,
+        color: color ?? AppColors.bone,
       );
 
-  static TextStyle get headingM => TextStyle(
-        fontSize: 18.sp,
+  static TextStyle headingLarge({Color? color}) => GoogleFonts.spaceGrotesk(
+        fontSize: 22,
         fontWeight: FontWeight.w600,
-        height: 1.3,
-        color: AppColors.textPrimary,
+        letterSpacing: -0.2,
+        color: color ?? AppColors.bone,
       );
 
-  // Body
-  static TextStyle get bodyL => TextStyle(
-        fontSize: 15.sp,
+  static TextStyle headingMedium({Color? color}) => GoogleFonts.spaceGrotesk(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: color ?? AppColors.bone,
+      );
+
+  static TextStyle headingSmall({Color? color}) => GoogleFonts.spaceGrotesk(
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        color: color ?? AppColors.bone,
+      );
+
+  // ── Body / UI — Inter ──────────────────────────────────────────────────────
+  static TextStyle bodyLarge({Color? color}) => GoogleFonts.inter(
+        fontSize: 16,
         fontWeight: FontWeight.w400,
-        height: 1.5,
-        color: AppColors.textPrimary,
+        color: color ?? AppColors.bone,
       );
 
-  static TextStyle get bodyM => TextStyle(
-        fontSize: 13.sp,
+  static TextStyle bodyMedium({Color? color}) => GoogleFonts.inter(
+        fontSize: 14,
         fontWeight: FontWeight.w400,
-        height: 1.5,
-        color: AppColors.textMuted,
+        color: color ?? AppColors.bone,
       );
 
-  // Caption
-  static TextStyle get caption => TextStyle(
-        fontSize: 11.sp,
+  static TextStyle bodySmall({Color? color}) => GoogleFonts.inter(
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        color: color ?? AppColors.slate,
+      );
+
+  static TextStyle labelLarge({Color? color}) => GoogleFonts.inter(
+        fontSize: 15,
         fontWeight: FontWeight.w500,
-        height: 1.4,
-        color: AppColors.textMuted,
+        color: color ?? AppColors.bone,
       );
 
-  // Button label
-  static TextStyle get buttonLabel => TextStyle(
-        fontSize: 14.sp,
+  static TextStyle labelMedium({Color? color}) => GoogleFonts.inter(
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        color: color ?? AppColors.slate,
+      );
+
+  static TextStyle buttonLabel({Color? color}) => GoogleFonts.inter(
+        fontSize: 15,
         fontWeight: FontWeight.w600,
-        height: 1.0,
-        color: AppColors.textPrimary,
         letterSpacing: 0.2,
+        color: color ?? AppColors.bone,
       );
 
-  // Legacy aliases for backward compatibility
-  static TextStyle get displayLarge => displayXL;
-  static TextStyle get headingMedium => headingM;
-  static TextStyle get bodyLarge => bodyL;
-  static TextStyle get bodyMedium => bodyM;
+  // ── Data / System Readout — JetBrains Mono ─────────────────────────────────
+  /// Use for: credit balance, job IDs, status strings, timecodes.
+  static TextStyle creditCounter({Color? color, double fontSize = 20}) =>
+      GoogleFonts.jetBrainsMono(
+        fontSize: fontSize,
+        fontWeight: FontWeight.w700,
+        color: color ?? AppColors.ember,
+      );
+
+  static TextStyle jobStatus({Color? color}) => GoogleFonts.jetBrainsMono(
+        fontSize: 11,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.5,
+        color: color ?? AppColors.slate,
+      );
+
+  static TextStyle jobId({Color? color}) => GoogleFonts.jetBrainsMono(
+        fontSize: 11,
+        fontWeight: FontWeight.w400,
+        color: color ?? AppColors.slate,
+      );
+
+  static TextStyle dataLabel({Color? color}) => GoogleFonts.jetBrainsMono(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        color: color ?? AppColors.bone,
+      );
 }
