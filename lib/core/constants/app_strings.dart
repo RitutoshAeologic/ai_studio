@@ -123,6 +123,18 @@ abstract class AppStrings {
   static const String saveToGallery = 'Save to Gallery';
   static const String sharingEllipsis = 'Sharing…';
   static const String share = 'Share';
+  static const String imageUnavailable = 'Image unavailable';
+  static const String imageNotAvailableOnServer =
+      'This image is no longer available on the server.';
+  static const String deleteCreation = 'Delete Creation';
+  static const String deleteConfirmationTitle = 'Delete Creation?';
+  static const String deleteConfirmationMessage =
+      'Are you sure you want to delete this creation? This action cannot be undone.';
+  static const String delete = 'Delete';
+  static const String deletingEllipsis = 'Deleting…';
+  static const String creationDeleted = 'Creation deleted successfully';
+  static const String deleteFailed = 'Delete failed: ';
+  static const String cleanupMissingItems = 'Clean Up Missing';
 
   // Placeholders & Meta
   static const String generationCanvasTitle = 'Generation Studio Canvas';

@@ -45,6 +45,7 @@ class AuthController extends GetxController {
   void onInit() {
     super.onInit();
     currentUser.value = _authRepository.currentUser;
+    currentUser.bindStream(_authRepository.watchAuthState());
   }
 
   void clearError() {

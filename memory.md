@@ -79,6 +79,12 @@ This document records essential architectural decisions, system configurations, 
 
 2. **Clean Architecture Layering**:
    - **Domain Layer** (`lib/domain/`): Pure Dart, no Flutter UI or Firebase SDK imports. Features `UserEntity`, `AuthRepository`, `StorageRepository` abstract interfaces, and `Result<S, F>` functional wrappers.
+
+29. **Creation Deletion & Missing Item Cleanup**:
+   - `JobRepository.deleteJob` ([lib/domain/repositories/job_repository.dart](file:///Users/mac/StudioProjects/ai_studio/lib/domain/repositories/job_repository.dart)) and `JobController.deleteJob` ([lib/features/jobs/controllers/job_controller.dart](file:///Users/mac/StudioProjects/ai_studio/lib/features/jobs/controllers/job_controller.dart)) delete job documents from Firestore (`jobs/<jobId>`) and purge associated files from Firebase Storage (`outputs/...`, `user_inputs/...`, `.glb`).
+   - `GalleryTabView` ([lib/features/shell/views/gallery_tab_view.dart](file:///Users/mac/StudioProjects/ai_studio/lib/features/shell/views/gallery_tab_view.dart)) automatically filters out orphaned/missing creations whose storage objects are 404.
+   - Added a top-right **Delete Icon Button** on every card in `GalleryTabView` and inside `ImageResultModal` with modal confirmation dialogs ("Delete Creation? This action cannot be undone.").
+   - Added a **"Clean Up Missing"** action banner in `GalleryTabView` to bulk-purge Firestore documents whose storage assets are missing.
    - **Data Layer** (`lib/data/`): `UserModel` (with `fromFirebaseUser`, `fromFirestore`, `toFirestore`), `AuthRepositoryImpl` (with 4-second timeouts & fallback handling), and `StorageRepositoryImpl` connecting `FirebaseStorage`.
    - **Core Layer** (`lib/core/`): Centralized `ErrorHandler`, `Failure` sealed hierarchy, `Logger` (no raw `print()`), and shared widgets (`AppButton`, `AppTextField`).
    - **Presentation Layer** (`lib/features/`): Features `AuthController` (with guaranteed `finally` loading state reset), scoped `AuthBinding`, `LoginView`, and `SignupView`.

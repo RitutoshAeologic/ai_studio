@@ -21,6 +21,15 @@ class _StubJobRepository implements JobRepository {
   Stream<Result<JobEntity, Failure>> watchJob(String jobId) =>
       _controller.stream;
 
+  @override
+  Future<Result<void, Failure>> deleteJob(
+    String jobId, {
+    String? outputUrl,
+    String? inputImageUrl,
+    String? meshUrl,
+  }) async =>
+      const Success(null);
+
   void close() => _controller.close();
 }
 
@@ -99,9 +108,9 @@ void main() {
         createdAt: DateTime(2026, 1, 1),
       ));
 
-      final jobId = await ctrl.submitJob(GenerateJobRequest(
+      final jobId = await ctrl.submitJob(const GenerateJobRequest(
         jobType: JobType.imageGen,
-        params: const JobParams(userPrompt: 'Cyberpunk city'),
+        params: JobParams(userPrompt: 'Cyberpunk city'),
       ));
 
       expect(jobId, 'job_abc');
@@ -113,9 +122,9 @@ void main() {
     test('failure — submissionError set, null returned', () async {
       api.nextResult = const Error(NetworkFailure('Server unreachable'));
 
-      final jobId = await ctrl.submitJob(GenerateJobRequest(
+      final jobId = await ctrl.submitJob(const GenerateJobRequest(
         jobType: JobType.imageGen,
-        params: const JobParams(userPrompt: 'test'),
+        params: JobParams(userPrompt: 'test'),
       ));
 
       expect(jobId, isNull);
@@ -126,9 +135,9 @@ void main() {
     test('InsufficientCreditsFailure — correct message shown', () async {
       api.nextResult = const Error(InsufficientCreditsFailure());
 
-      final jobId = await ctrl.submitJob(GenerateJobRequest(
+      final jobId = await ctrl.submitJob(const GenerateJobRequest(
         jobType: JobType.imageGen,
-        params: const JobParams(userPrompt: 'test'),
+        params: JobParams(userPrompt: 'test'),
       ));
 
       expect(jobId, isNull);

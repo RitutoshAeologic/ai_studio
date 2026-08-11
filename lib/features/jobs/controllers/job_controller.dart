@@ -115,6 +115,17 @@ class JobController extends GetxController {
     _resetState();
   }
 
+  /// Delete a job document from Firestore and remove its associated storage files.
+  Future<bool> deleteJob(JobEntity job) async {
+    final result = await _jobRepository.deleteJob(
+      job.jobId,
+      outputUrl: job.outputUrl,
+      inputImageUrl: job.params.imageUrl,
+      meshUrl: job.meshUrl,
+    );
+    return result.isSuccess;
+  }
+
   // ── Convenience accessors for Dev #2 ──────────────────────────────────────
 
   /// Flat image URL — available when status == completed for IMAGE_GEN / THEME_CHANGE / BG_REMOVAL.

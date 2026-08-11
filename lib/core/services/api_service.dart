@@ -71,7 +71,7 @@ class GenerateJobRequest {
 /// Any client can read any user's balance by probing a user_id path. Please add Authorization
 /// header checking or rely purely on Firestore real-time security rules for wallet reads.
 class ApiService {
-  /// Build-time configurable base URL via --dart-define=API_BASE_URL=<url>.
+  /// Build-time configurable base URL via `--dart-define=API_BASE_URL=url`.
   /// Falls back to the ngrok dev tunnel when no dart-define is provided.
   static const String _liveBaseUrl = String.fromEnvironment(
     'API_BASE_URL',

@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:gal/gal.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -12,19 +12,23 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/logger.dart';
 import '../../../core/utils/url_helper.dart';
-import '../../../core/widgets/aperture_indicator.dart';
+import '../../../core/widgets/app_network_image.dart';
+import '../../../domain/entities/job_entity.dart';
+import '../../jobs/controllers/job_controller.dart';
 
-/// Fullscreen high-resolution result viewer for image outputs (IMAGE_GEN / BG_REMOVAL / THEME_CHANGE).
+/// Fullscreen high-resolution result viewer for image outputs (IMAGE_GEN / BG_REMOVAL / THEME_CHANGE) with delete support.
 class ImageResultModal extends StatefulWidget {
   final String imageUrl;
   final String? title;
   final String? jobId;
+  final JobEntity? job;
 
   const ImageResultModal({
     super.key,
     required this.imageUrl,
     this.title,
     this.jobId,
+    this.job,
   });
 
   static void show(
@@ -32,6 +36,7 @@ class ImageResultModal extends StatefulWidget {
     required String imageUrl,
     String? title,
     String? jobId,
+    JobEntity? job,
   }) {
     showModalBottomSheet(
       context: context,
@@ -41,6 +46,7 @@ class ImageResultModal extends StatefulWidget {
         imageUrl: imageUrl,
         title: title,
         jobId: jobId,
+        job: job,
       ),
     );
   }
@@ -52,12 +58,11 @@ class ImageResultModal extends StatefulWidget {
 class _ImageResultModalState extends State<ImageResultModal> {
   bool _isSaving = false;
   bool _isSharing = false;
-
-  String get _normalizedUrl => UrlHelper.normalizeUrl(widget.imageUrl);
+  bool _isDeleting = false;
 
   Future<File?> _downloadTempFile() async {
     try {
-      final url = _normalizedUrl;
+      final url = await UrlHelper.resolveStorageUrl(widget.imageUrl);
       if (url.isEmpty) {
         Logger.w('Download aborted: empty image URL');
         return null;
@@ -113,7 +118,7 @@ class _ImageResultModalState extends State<ImageResultModal> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Could not download image. Please check connection.',
+                AppStrings.imageNotAvailableOnServer,
                 style: AppTextStyles.bodyMedium(color: AppColors.bone),
               ),
               backgroundColor: AppColors.statusError,
@@ -127,7 +132,7 @@ class _ImageResultModalState extends State<ImageResultModal> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Save failed: $e',
+              '${AppStrings.saveFailed}$e',
               style: AppTextStyles.bodyMedium(color: AppColors.bone),
             ),
             backgroundColor: AppColors.statusError,
@@ -154,7 +159,7 @@ class _ImageResultModalState extends State<ImageResultModal> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Could not download image to share. Please check connection.',
+                AppStrings.imageNotAvailableOnServer,
                 style: AppTextStyles.bodyMedium(color: AppColors.bone),
               ),
               backgroundColor: AppColors.statusError,
@@ -168,7 +173,7 @@ class _ImageResultModalState extends State<ImageResultModal> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Share failed: $e',
+              '${AppStrings.shareFailed}$e',
               style: AppTextStyles.bodyMedium(color: AppColors.bone),
             ),
             backgroundColor: AppColors.statusError,
@@ -178,6 +183,71 @@ class _ImageResultModalState extends State<ImageResultModal> {
     } finally {
       if (mounted) setState(() => _isSharing = false);
     }
+  }
+
+  void _confirmAndDelete() {
+    if (widget.job == null) return;
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: AppColors.surfaceCard,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+          side: BorderSide(color: AppColors.borderSubtle, width: 1.r),
+        ),
+        title: Text(
+          AppStrings.deleteConfirmationTitle,
+          style: AppTextStyles.headingSmall(color: AppColors.bone),
+        ),
+        content: Text(
+          AppStrings.deleteConfirmationMessage,
+          style: AppTextStyles.bodyMedium(color: AppColors.slate),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: Text(
+              AppStrings.cancel,
+              style: AppTextStyles.buttonLabel(color: AppColors.slate),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.statusError,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+            onPressed: () async {
+              Navigator.of(dialogCtx).pop();
+              setState(() => _isDeleting = true);
+              final jobCtrl = Get.find<JobController>();
+              final success = await jobCtrl.deleteJob(widget.job!);
+              if (mounted) {
+                Navigator.of(context).pop(); // Close modal
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success
+                          ? AppStrings.creationDeleted
+                          : '${AppStrings.deleteFailed}Failed to delete',
+                      style: AppTextStyles.bodyMedium(color: AppColors.bone),
+                    ),
+                    backgroundColor: success
+                        ? AppColors.statusSuccess
+                        : AppColors.statusError,
+                  ),
+                );
+              }
+            },
+            child: Text(
+              AppStrings.delete,
+              style: AppTextStyles.buttonLabel(color: AppColors.bone),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -205,6 +275,24 @@ class _ImageResultModalState extends State<ImageResultModal> {
                   style: AppTextStyles.headingSmall(),
                 ),
                 const Spacer(),
+                if (widget.job != null)
+                  IconButton(
+                    icon: _isDeleting
+                        ? SizedBox(
+                            width: 18.r,
+                            height: 18.r,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.r,
+                              color: AppColors.statusError,
+                            ),
+                          )
+                        : Icon(
+                            Icons.delete_outline_rounded,
+                            color: AppColors.statusError,
+                            size: 22.r,
+                          ),
+                    onPressed: _isDeleting ? null : _confirmAndDelete,
+                  ),
                 IconButton(
                   icon: Icon(
                     Icons.close_rounded,
@@ -226,38 +314,9 @@ class _ImageResultModalState extends State<ImageResultModal> {
                 child: InteractiveViewer(
                   minScale: 0.8,
                   maxScale: 4.0,
-                  child: CachedNetworkImage(
-                    imageUrl: _normalizedUrl,
-                    httpHeaders: UrlHelper.ngrokHeaders,
+                  child: AppNetworkImage(
+                    imageUrl: widget.imageUrl,
                     fit: BoxFit.contain,
-                    placeholder: (context, url) => Center(
-                      child: ApertureIndicator(
-                        size: 48.r,
-                        color: AppColors.ember,
-                      ),
-                    ),
-                    errorWidget: (context, url, error) {
-                      Logger.w('CachedNetworkImage error loading $url: $error');
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.broken_image_outlined,
-                              color: AppColors.statusError,
-                              size: 48.r,
-                            ),
-                            SizedBox(height: 8.h),
-                            Text(
-                              'Unable to load image',
-                              style: AppTextStyles.bodyMedium(
-                                color: AppColors.slate,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
                   ),
                 ),
               ),
