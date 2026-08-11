@@ -30,9 +30,12 @@ class InitialBinding extends Bindings {
       () => JobRepositoryImpl(),
       fenix: true,
     );
-    Get.lazyPut<AuthController>(
-      () => AuthController(),
-      fenix: true,
+    // AuthController manages global auth state for the entire app lifetime.
+    // permanent: true ensures TextEditingControllers are NEVER disposed during
+    // navigation transitions, preventing "controller used after dispose" crashes.
+    Get.put<AuthController>(
+      AuthController(),
+      permanent: true,
     );
   }
 }

@@ -14,11 +14,9 @@ class SignupView extends GetView<AuthController> {
 
   @override
   Widget build(BuildContext context) {
-    // Use controllers managed by AuthController so resetFormAndErrors() works.
-    final nameCtrl = controller.signupNameCtrl;
-    final emailCtrl = controller.signupEmailCtrl;
-    final passwordCtrl = controller.signupPasswordCtrl;
-    final confirmCtrl = controller.signupConfirmPasswordCtrl;
+    // NOTE: All TextEditingControllers are referenced via controller.xxxCtrl
+    // directly (not via local variables) to avoid stale references to disposed
+    // controllers when AuthController is recreated by GetX fenix mechanism.
 
     return UnfocusOnTap(
       child: Scaffold(
@@ -34,7 +32,6 @@ class SignupView extends GetView<AuthController> {
               // ── Back button ───────────────────────────────────────────────
               GestureDetector(
                 onTap: () {
-                  // Clear signup errors before going back
                   controller.resetFormAndErrors();
                   Get.back();
                 },
@@ -87,46 +84,48 @@ class SignupView extends GetView<AuthController> {
 
               // ── Form ──────────────────────────────────────────────────────
               Obx(() => AppTextField(
-                    controller: nameCtrl,
+                    controller: controller.signupNameCtrl,
                     label: AppStrings.fullNameLabel,
                     hint: AppStrings.fullNameHint,
                     prefixIcon: Icons.person_outline,
                     autofillHints: const [AutofillHints.name],
                     errorText: controller.signupNameError.value,
-                    onChanged: (_) => controller.validateSignupName(nameCtrl.text),
+                    onChanged: (_) => controller.validateSignupName(
+                        controller.signupNameCtrl.text),
                   )),
 
               SizedBox(height: 10.h),
 
               Obx(() => AppTextField(
-                    controller: emailCtrl,
+                    controller: controller.signupEmailCtrl,
                     label: AppStrings.emailLabel,
                     hint: AppStrings.emailHint,
                     prefixIcon: Icons.mail_outline,
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.email],
                     errorText: controller.signupEmailError.value,
-                    onChanged: (_) => controller.validateSignupEmail(emailCtrl.text),
+                    onChanged: (_) => controller.validateSignupEmail(
+                        controller.signupEmailCtrl.text),
                   )),
 
               SizedBox(height: 10.h),
 
               Obx(() => AppTextField(
-                    controller: passwordCtrl,
+                    controller: controller.signupPasswordCtrl,
                     label: AppStrings.passwordLabel,
                     hint: AppStrings.passwordSignupHint,
                     prefixIcon: Icons.lock_outline,
                     isObscure: true,
                     autofillHints: const [AutofillHints.newPassword],
                     errorText: controller.signupPasswordError.value,
-                    onChanged: (_) =>
-                        controller.validateSignupPassword(passwordCtrl.text),
+                    onChanged: (_) => controller.validateSignupPassword(
+                        controller.signupPasswordCtrl.text),
                   )),
 
               SizedBox(height: 10.h),
 
               Obx(() => AppTextField(
-                    controller: confirmCtrl,
+                    controller: controller.signupConfirmPasswordCtrl,
                     label: AppStrings.confirmPasswordLabel,
                     hint: AppStrings.confirmPasswordHint,
                     prefixIcon: Icons.lock_outline,
@@ -134,12 +133,13 @@ class SignupView extends GetView<AuthController> {
                     textInputAction: TextInputAction.done,
                     errorText: controller.signupConfirmPasswordError.value,
                     onChanged: (_) => controller.validateSignupConfirmPassword(
-                        confirmCtrl.text, passwordCtrl.text),
+                        controller.signupConfirmPasswordCtrl.text,
+                        controller.signupPasswordCtrl.text),
                     onFieldSubmitted: (_) => controller.signUpWithEmail(
-                        nameCtrl.text,
-                        emailCtrl.text,
-                        passwordCtrl.text,
-                        confirmCtrl.text),
+                        controller.signupNameCtrl.text,
+                        controller.signupEmailCtrl.text,
+                        controller.signupPasswordCtrl.text,
+                        controller.signupConfirmPasswordCtrl.text),
                   )),
 
               SizedBox(height: 16.h),
@@ -177,10 +177,10 @@ class SignupView extends GetView<AuthController> {
                     label: AppStrings.createAccountButton,
                     isLoading: controller.isSignupLoading.value,
                     onPressed: () => controller.signUpWithEmail(
-                        nameCtrl.text,
-                        emailCtrl.text,
-                        passwordCtrl.text,
-                        confirmCtrl.text),
+                        controller.signupNameCtrl.text,
+                        controller.signupEmailCtrl.text,
+                        controller.signupPasswordCtrl.text,
+                        controller.signupConfirmPasswordCtrl.text),
                   )),
 
               SizedBox(height: 10.h),

@@ -15,10 +15,6 @@ class LoginView extends GetView<AuthController> {
 
   @override
   Widget build(BuildContext context) {
-    // Use controllers managed by AuthController so resetFormAndErrors() works.
-    final emailCtrl = controller.loginEmailCtrl;
-    final passwordCtrl = controller.loginPasswordCtrl;
-
     // Clear any stale errors every time this page is freshly shown.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.resetFormAndErrors();
@@ -67,21 +63,25 @@ class LoginView extends GetView<AuthController> {
               SizedBox(height: 40.h),
 
               // ── Form ──────────────────────────────────────────────────────
+              // NOTE: controller.loginEmailCtrl is referenced directly (not via a
+              // local variable) so that after fenix recreation the Obx always reads
+              // the fresh TextEditingController from the new controller instance.
               Obx(() => AppTextField(
-                    controller: emailCtrl,
+                    controller: controller.loginEmailCtrl,
                     label: AppStrings.emailLabel,
                     hint: AppStrings.emailHint,
                     prefixIcon: Icons.mail_outline,
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.email],
                     errorText: controller.loginEmailError.value,
-                    onChanged: (_) => controller.validateLoginEmail(emailCtrl.text),
+                    onChanged: (_) => controller.validateLoginEmail(
+                        controller.loginEmailCtrl.text),
                   )),
 
               SizedBox(height: 16.h),
 
               Obx(() => AppTextField(
-                    controller: passwordCtrl,
+                    controller: controller.loginPasswordCtrl,
                     label: AppStrings.passwordLabel,
                     hint: AppStrings.passwordLoginHint,
                     prefixIcon: Icons.lock_outline,
@@ -89,10 +89,11 @@ class LoginView extends GetView<AuthController> {
                     textInputAction: TextInputAction.done,
                     autofillHints: const [AutofillHints.password],
                     errorText: controller.loginPasswordError.value,
-                    onChanged: (_) =>
-                        controller.validateLoginPassword(passwordCtrl.text),
+                    onChanged: (_) => controller.validateLoginPassword(
+                        controller.loginPasswordCtrl.text),
                     onFieldSubmitted: (_) => controller.signInWithEmail(
-                        emailCtrl.text, passwordCtrl.text),
+                        controller.loginEmailCtrl.text,
+                        controller.loginPasswordCtrl.text),
                   )),
 
               // Forgot password
@@ -143,7 +144,8 @@ class LoginView extends GetView<AuthController> {
                     label: AppStrings.signIn,
                     isLoading: controller.isLoginLoading.value,
                     onPressed: () => controller.signInWithEmail(
-                        emailCtrl.text, passwordCtrl.text),
+                        controller.loginEmailCtrl.text,
+                        controller.loginPasswordCtrl.text),
                   )),
 
               SizedBox(height: 32.h),
