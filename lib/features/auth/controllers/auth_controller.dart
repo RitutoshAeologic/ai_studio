@@ -26,10 +26,12 @@ class AuthController extends GetxController {
   final signupEmailCtrl = TextEditingController();
   final signupPasswordCtrl = TextEditingController();
   final signupConfirmPasswordCtrl = TextEditingController();
+  final forgotPasswordEmailCtrl = TextEditingController();
 
   // Reactive Auth State
   final RxBool isLoginLoading = false.obs;
   final RxBool isSignupLoading = false.obs;
+  final RxBool isForgotPasswordLoading = false.obs;
   final RxString errorMessage = ''.obs;
   final Rxn<UserEntity> currentUser = Rxn<UserEntity>();
 
@@ -40,6 +42,11 @@ class AuthController extends GetxController {
   final RxnString signupEmailError = RxnString();
   final RxnString signupPasswordError = RxnString();
   final RxnString signupConfirmPasswordError = RxnString();
+  final RxnString forgotPasswordEmailError = RxnString();
+
+  // Forgot Password State
+  final RxBool resetEmailSent = false.obs;
+  final RxString resetEmailAddress = ''.obs;
 
   @override
   void onInit() {
@@ -132,6 +139,17 @@ class AuthController extends GetxController {
     return nErr == null && eErr == null && pErr == null && cErr == null;
   }
 
+  String? validateForgotPasswordEmail(String? val) {
+    if (val == null || val.trim().isEmpty) {
+      forgotPasswordEmailError.value = AppStrings.emailRequiredError;
+    } else if (!GetUtils.isEmail(val.trim())) {
+      forgotPasswordEmailError.value = AppStrings.emailInvalidError;
+    } else {
+      forgotPasswordEmailError.value = null;
+    }
+    return forgotPasswordEmailError.value;
+  }
+
   // ─── Firebase Auth Actions ────────────────────────────────────────────
   Future<void> signInWithEmail(String email, String password) async {
     if (!validateLoginForm(email, password)) return;
@@ -201,6 +219,37 @@ class AuthController extends GetxController {
     }
   }
 
+  // ─── Forgot Password ──────────────────────────────────────────────────
+  Future<void> sendPasswordResetEmail(String email) async {
+    if (validateForgotPasswordEmail(email) != null) return;
+
+    isForgotPasswordLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+      final result = await _authRepository.sendPasswordResetEmail(
+        email: email.trim(),
+      );
+
+      result.fold(
+        (_) {
+          Logger.i('Password reset email dispatched for: $email');
+          resetEmailAddress.value = email.trim();
+          resetEmailSent.value = true;
+        },
+        (failure) {
+          Logger.w('Password reset failed: ${failure.message}');
+          errorMessage.value = ErrorHandler.map(failure);
+        },
+      );
+    } catch (e, stackTrace) {
+      Logger.e('Unhandled error in sendPasswordResetEmail', e, stackTrace);
+      errorMessage.value = AppStrings.unknownError;
+    } finally {
+      isForgotPasswordLoading.value = false;
+    }
+  }
+
   Future<void> signOut() async {
     // Clean up FCM token before signing out.
     await FcmService.instance.onSignOut();
@@ -223,6 +272,9 @@ class AuthController extends GetxController {
     signupEmailError.value = null;
     signupPasswordError.value = null;
     signupConfirmPasswordError.value = null;
+    forgotPasswordEmailError.value = null;
+    resetEmailSent.value = false;
+    resetEmailAddress.value = '';
     errorMessage.value = '';
 
     loginEmailCtrl.clear();
@@ -231,6 +283,7 @@ class AuthController extends GetxController {
     signupEmailCtrl.clear();
     signupPasswordCtrl.clear();
     signupConfirmPasswordCtrl.clear();
+    forgotPasswordEmailCtrl.clear();
   }
 
   @override
@@ -241,6 +294,7 @@ class AuthController extends GetxController {
     signupEmailCtrl.dispose();
     signupPasswordCtrl.dispose();
     signupConfirmPasswordCtrl.dispose();
+    forgotPasswordEmailCtrl.dispose();
     super.onClose();
   }
 }

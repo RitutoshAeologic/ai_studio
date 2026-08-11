@@ -26,4 +26,10 @@ abstract class AuthRepository {
 
   /// Currently signed in user entity, or null.
   UserEntity? get currentUser;
+
+  /// Send a Firebase password reset email to the given address.
+  /// Always shows generic success to the caller to prevent email enumeration.
+  Future<Result<void, AuthFailure>> sendPasswordResetEmail({
+    required String email,
+  });
 }

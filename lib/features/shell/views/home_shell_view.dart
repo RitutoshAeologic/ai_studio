@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/widgets/unfocus_on_tap.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../generate/views/generation_studio_view.dart';
 import '../../wallet/views/wallet_debug_view.dart';
@@ -90,9 +91,11 @@ class _HomeShellViewState extends State<HomeShellView> {
       ),
 
       // ── Tab Body Container ────────────────────────────────────────────────
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
+      body: UnfocusOnTap(
+        child: IndexedStack(
+          index: _currentIndex,
+          children: _pages,
+        ),
       ),
 
       // ── Bottom Navigation Bar ──────────────────────────────────────────────

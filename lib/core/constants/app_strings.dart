@@ -185,4 +185,21 @@ abstract class AppStrings {
       'This image is too blurry for AI processing. Please select a sharper image.';
   static const String imageLowContrast =
       'This image lacks visual detail or contrast. Please select a clearer image.';
+
+  // Forgot Password Strings
+  static const String forgotPasswordTitle = 'Forgot your password?';
+  static const String forgotPasswordSubtitle =
+      'Enter the email address linked to your account and we\'ll send you a reset link.';
+  static const String sendResetLink = 'Send Reset Link';
+  static const String resetEmailSentTitle = 'Check your inbox';
+  static const String resetEmailSentBody =
+      'We\'ve sent a password reset link to your email address. Check your spam folder if it doesn\'t arrive within a few minutes.';
+  static const String resendEmail = 'Resend email';
+  static const String backToSignIn = 'Back to Sign In';
+  static const String resetEmailUserNotFound =
+      'No account found with that email address.';
+  static const String resetEmailCooldown =
+      'Please wait a moment before requesting another reset link.';
+  static const String resetEmailTooManyRequests =
+      'Too many attempts. Please wait a few minutes and try again.';
 }

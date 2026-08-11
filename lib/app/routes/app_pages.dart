@@ -7,6 +7,7 @@ import '../../core/widgets/aperture_indicator.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../features/auth/views/login_view.dart';
 import '../../features/auth/views/signup_view.dart';
+import '../../features/auth/views/forgot_password_view.dart';
 import '../../features/shell/bindings/home_shell_binding.dart';
 import '../../features/shell/views/home_shell_view.dart';
 import '../middleware/auth_middleware.dart';
@@ -34,6 +35,13 @@ abstract class AppPages {
     GetPage(
       name: AppRoutes.signup,
       page: () => const SignupView(),
+      middlewares: [GuestMiddleware()],
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: AppRoutes.forgotPassword,
+      page: () => const ForgotPasswordView(),
       middlewares: [GuestMiddleware()],
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 250),

@@ -99,7 +99,10 @@ class LoginView extends GetView<AuthController> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    controller.resetFormAndErrors();
+                    Get.toNamed(AppRoutes.forgotPassword);
+                  },
                   child: Text(AppStrings.forgotPassword,
                       style: AppTextStyles.labelMedium(color: AppColors.ember)),
                 ),

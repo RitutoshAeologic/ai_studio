@@ -166,6 +166,24 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Result<void, AuthFailure>> sendPasswordResetEmail({
+    required String email,
+  }) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email.trim());
+      Logger.i('Password reset email sent to: $email');
+      return const Success(null);
+    } on fb.FirebaseAuthException catch (e, stackTrace) {
+      Logger.e(
+          'FirebaseAuthException during password reset: \${e.code}', e, stackTrace);
+      return Error(AuthFailure(_mapFirebaseAuthError(e.code)));
+    } catch (e, stackTrace) {
+      Logger.e('Unexpected error during password reset', e, stackTrace);
+      return Error(AuthFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Result<void, AuthFailure>> signOut() async {
     try {
       await _firebaseAuth.signOut();
@@ -189,6 +207,8 @@ class AuthRepositoryImpl implements AuthRepository {
         return AppStrings.emailInvalidError;
       case 'weak-password':
         return AppStrings.passwordLengthError;
+      case 'too-many-requests':
+        return AppStrings.resetEmailTooManyRequests;
       default:
         return AppStrings.unknownError;
     }
