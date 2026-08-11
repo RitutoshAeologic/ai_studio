@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Ai Studio</string>
+	<string>AI Studio</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -26,6 +26,24 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- iOS Privacy Keys for Image Picker and Photo Library Saving -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access to your photo library to let you select images for AI generation.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We need permission to save generated AI images to your photo library.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>We need access to your camera to let you take photos for AI generation.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need access to your microphone when recording video content.</string>
+	<!-- App Transport Security for Backend API & Firebase Media Connections -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<!-- Disable Firebase Messaging / APNs Auto Registration for iOS -->
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -3,25 +3,24 @@ import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../utils/logger.dart';
 
 /// Top-level background message handler — must be a top-level function
 /// annotated with @pragma so it survives Dart tree-shaking in release builds.
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Firebase must be initialized in the background isolate.
-  // The app's main() already calls Firebase.initializeApp() — this handler
-  // runs in a separate isolate so logging is the best we can do here.
   Logger.i('[FCM Background] Message received: ${message.messageId}');
 }
 
 /// FCM push notification service.
 ///
 /// Responsibilities:
-/// 1. Request notification permissions on first launch.
-/// 2. Register + store the FCM token on the user's Firestore doc.
-/// 3. Handle foreground messages with an in-app snackbar.
-/// 4. Handle notification taps to deep-link into the relevant result view.
+/// 1. Request notification permissions on Android launch.
+/// 2. Disabled on iOS per project requirement.
+/// 3. Register + store the FCM token on the user's Firestore doc.
+/// 4. Handle foreground messages with an in-app snackbar.
+/// 5. Handle notification taps to deep-link into the relevant result view.
 class FcmService {
   FcmService._();
   static final FcmService instance = FcmService._();
@@ -32,6 +31,12 @@ class FcmService {
   /// Call once after a successful sign-in.
   /// Requests permission, stores FCM token on the user doc, sets up handlers.
   Future<void> initialize({required String uid}) async {
+    // Disable FCM push notifications on iOS per project requirement
+    if (GetPlatform.isIOS) {
+      Logger.i('[FCM] Push notifications disabled on iOS — skipping initialization');
+      return;
+    }
+
     // ── 1. Request permission ─────────────────────────────────────────────────
     final settings = await _messaging.requestPermission(
       alert: true,
@@ -75,7 +80,7 @@ class FcmService {
     try {
       final token = await _messaging.getToken();
       if (token == null) {
-        Logger.w('[FCM] Token is null — APNs not configured or simulator?');
+        Logger.w('[FCM] Token is null');
         return;
       }
       await _storeToken(uid, token);
@@ -122,19 +127,17 @@ class FcmService {
   void _handleNotificationTap(RemoteMessage message) {
     Logger.i('[FCM Tap] data: ${message.data}');
 
-    // Expected data payload from backend:
-    // { "type": "JOB_COMPLETED", "jobId": "<jobId>", "jobType": "IMAGE_GEN" }
     final jobId = message.data['jobId'] as String?;
     if (jobId == null) return;
 
-    // Navigate to Gallery tab (index 1) — the job will appear there.
-    // HomeShellView uses IndexedStack; set index via a Get.find callback.
     Get.toNamed('/home', arguments: {'deepLinkJobId': jobId});
   }
 
   /// Clean up on sign-out — remove FCM token from Firestore so notifications
   /// are not sent to a signed-out device.
   Future<void> onSignOut() async {
+    if (GetPlatform.isIOS) return;
+
     final uid = fb.FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     try {

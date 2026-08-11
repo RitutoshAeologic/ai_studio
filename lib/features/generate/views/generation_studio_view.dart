@@ -10,6 +10,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/preset_themes.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/image_upload_service.dart';
+import '../../../core/utils/image_validator.dart';
 import '../../../core/widgets/aperture_indicator.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../domain/entities/job_entity.dart';
@@ -74,6 +75,36 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
     final xFile = await _imageUploadService.pickImage(source);
     if (xFile == null) return;
 
+    final featureTarget = _selectedJobType == JobType.meshGen
+        ? AiFeatureTarget.imageTo3d
+        : _selectedJobType == JobType.bgRemoval
+            ? AiFeatureTarget.backgroundReplacement
+            : _selectedJobType == JobType.themeChange
+                ? AiFeatureTarget.themeChange
+                : AiFeatureTarget.generalAi;
+
+    final validation = await ImageValidator.validateImage(
+      filePath: xFile.path,
+      featureTarget: featureTarget,
+      imageSource: source,
+    );
+
+    if (!validation.isValid) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              validation.errorMessage ?? AppStrings.imageCorrupted,
+              style: AppTextStyles.bodyMedium(color: AppColors.bone),
+            ),
+            backgroundColor: AppColors.statusError,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+      return;
+    }
+
     final file = File(xFile.path);
     setState(() {
       _selectedImageFile = file;
@@ -102,9 +133,9 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
             SnackBar(
               content: Text(
                 '${AppStrings.imageUploadFailedNotice}${failure.message}',
-                style: AppTextStyles.bodyM(color: Colors.white),
+                style: AppTextStyles.bodyMedium(color: Colors.white),
               ),
-              backgroundColor: AppColors.errorIndicator,
+              backgroundColor: AppColors.statusError,
             ),
           );
         }

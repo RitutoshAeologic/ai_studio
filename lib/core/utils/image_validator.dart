@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
+import 'package:image_picker/image_picker.dart';
 
 import '../../domain/entities/image_validation_result.dart';
 import '../constants/app_strings.dart';
@@ -17,17 +18,25 @@ enum AiFeatureTarget {
 }
 
 /// High-performance Frontend Image Validation Pipeline.
-/// Analyzes image files before uploading to backend/GPU pipelines to save resource costs.
+///
+/// Uses a HYBRID approach based on the image source:
+/// - [ImageSource.gallery]: Only validates file integrity (size, format, decode).
+///   Gallery images are already OS-processed and guaranteed to be valid content.
+/// - [ImageSource.camera]: Adds blur detection on top of integrity checks.
+///   Live camera captures can be blurry due to hand shake or covered lens.
 abstract class ImageValidator {
   static const int minFileSizeBytes = 512; // 0.5 KB
   static const int maxFileSizeBytes = 20 * 1024 * 1024; // 20 MB
-  static const int minDimensionPx = 256;
-  static const int maxDimensionPx = 4096;
 
   /// Main entrypoint: Validates an image file for a given AI feature target.
+  ///
+  /// Pass [imageSource] to apply the correct validation strategy:
+  /// - [ImageSource.gallery] → integrity checks only (no pixel heuristics)
+  /// - [ImageSource.camera]  → integrity checks + blur detection
   static Future<ImageValidationResult> validateImage({
     required String filePath,
     required AiFeatureTarget featureTarget,
+    ImageSource imageSource = ImageSource.gallery,
   }) async {
     try {
       final file = File(filePath);
@@ -35,7 +44,7 @@ abstract class ImageValidator {
         return ImageValidationResult.failure(AppStrings.imageCorrupted);
       }
 
-      // 1. File Size Check
+      // 1. File Size Check (applies to both sources)
       final fileSizeBytes = file.lengthSync();
       if (fileSizeBytes < minFileSizeBytes) {
         return ImageValidationResult.failure(AppStrings.imageTooSmall);
@@ -44,7 +53,7 @@ abstract class ImageValidator {
         return ImageValidationResult.failure(AppStrings.imageTooLarge);
       }
 
-      // 2. Format / Extension Check
+      // 2. Format / Extension Check (applies to both sources)
       final ext = filePath.toLowerCase();
       final isSupportedExt = ext.endsWith('.jpg') ||
           ext.endsWith('.jpeg') ||
@@ -63,6 +72,8 @@ abstract class ImageValidator {
           bytes: bytes,
           fileSizeBytes: fileSizeBytes,
           featureTarget: featureTarget,
+          // Camera photos need blur check; gallery images do not.
+          isFromCamera: imageSource == ImageSource.camera,
         ),
       );
     } catch (e, stackTrace) {
@@ -76,17 +87,19 @@ class _ValidationParams {
   final Uint8List bytes;
   final int fileSizeBytes;
   final AiFeatureTarget featureTarget;
+  final bool isFromCamera;
 
   _ValidationParams({
     required this.bytes,
     required this.fileSizeBytes,
     required this.featureTarget,
+    required this.isFromCamera,
   });
 }
 
-/// Isolated worker function for fast image decoding & pixel matrix analysis.
+/// Isolated worker function for image decoding & pixel matrix analysis.
 ImageValidationResult _analyzeImageBytes(_ValidationParams params) {
-  // Decode image
+  // Decode image — rejects corrupt/unreadable files regardless of source
   final decoded = img.decodeImage(params.bytes);
   if (decoded == null) {
     return ImageValidationResult.failure(AppStrings.imageCorrupted);
@@ -95,23 +108,30 @@ ImageValidationResult _analyzeImageBytes(_ValidationParams params) {
   final width = decoded.width;
   final height = decoded.height;
 
-  // Resolution Check
-  if (width < ImageValidator.minDimensionPx ||
-      height < ImageValidator.minDimensionPx) {
-    return ImageValidationResult.failure(AppStrings.imageLowResolution);
-  }
-  if (width > ImageValidator.maxDimensionPx ||
-      height > ImageValidator.maxDimensionPx) {
-    return ImageValidationResult.failure(AppStrings.imageHighResolution);
+  // --- GALLERY PATH ---
+  // Gallery images are OS-processed (saved by the photo library, already valid).
+  // We only verify the bitmap decoded successfully above and return immediately.
+  if (!params.isFromCamera) {
+    return ImageValidationResult.success(
+      width: width,
+      height: height,
+      fileSizeBytes: params.fileSizeBytes,
+      brightness: 0.5,
+      contrastScore: 1.0,
+      blurScore: 100.0,
+      subjectFocusScore: 1.0,
+    );
   }
 
-  // Downsample to 128x128 grid for ultra-fast stats calculation
-  final sample = img.copyResize(decoded, width: 128, height: 128);
+  // --- CAMERA PATH ---
+  // Live camera captures can be blurry (hand-shake, covered lens, etc.).
+  // Downsample for fast pixel analysis.
+  final sample = img.copyResize(decoded, width: 64, height: 64);
   final sampleWidth = sample.width;
   final sampleHeight = sample.height;
   final totalPixels = sampleWidth * sampleHeight;
 
-  // Calculate Luminance Distribution
+  // Build luminance map
   double sumLuminance = 0.0;
   final List<double> luminances = List<double>.filled(totalPixels, 0.0);
   int idx = 0;
@@ -122,8 +142,6 @@ ImageValidationResult _analyzeImageBytes(_ValidationParams params) {
       final r = pixel.r / 255.0;
       final g = pixel.g / 255.0;
       final b = pixel.b / 255.0;
-
-      // Relative luminance
       final lum = 0.299 * r + 0.587 * g + 0.114 * b;
       luminances[idx++] = lum;
       sumLuminance += lum;
@@ -132,47 +150,40 @@ ImageValidationResult _analyzeImageBytes(_ValidationParams params) {
 
   final meanLuminance = sumLuminance / totalPixels;
 
-  // Calculate Luminance Variance & Standard Deviation
+  // Standard deviation — rejects flat/blank/covered camera lens
   double sumSqDiff = 0.0;
   for (int i = 0; i < totalPixels; i++) {
     final diff = luminances[i] - meanLuminance;
     sumSqDiff += diff * diff;
   }
-  final varianceLuminance = sumSqDiff / totalPixels;
-  final stdDevLuminance = sqrt(varianceLuminance);
+  final stdDevLuminance = sqrt(sumSqDiff / totalPixels);
 
-  // Blank / Black / White Screen Check
-  // If mean is > 0.96 (almost pure white) or < 0.04 (almost pure black) or stdDev < 0.02 (monochrome)
-  if (meanLuminance > 0.96 || meanLuminance < 0.04 || stdDevLuminance < 0.025) {
+  // Camera-specific: Reject covered lens (pitch black) or lens cap / pointed at
+  // a wall (all-white flash). stdDev < 0.015 means near-zero variation in any
+  // live capture — indicates a covered or blank real-world scene.
+  if (stdDevLuminance < 0.015) {
     return ImageValidationResult.failure(
         AppStrings.imageBlankOrExtremeBrightness);
   }
 
-  // Contrast Check
-  if (stdDevLuminance < 0.04) {
-    return ImageValidationResult.failure(AppStrings.imageLowContrast);
-  }
-
-  // Blur / Quality Check (Laplacian Edge Variance)
-  double laplacianVariance = 0.0;
+  // Laplacian edge variance — rejects severely out-of-focus / motion-blurred captures
   double sumLaplacian = 0.0;
   final List<double> laplacians = [];
 
   for (int y = 1; y < sampleHeight - 1; y++) {
     for (int x = 1; x < sampleWidth - 1; x++) {
-      final center = luminances[y * sampleWidth + x];
-      final top = luminances[(y - 1) * sampleWidth + x];
-      final bottom = luminances[(y + 1) * sampleWidth + x];
-      final left = luminances[y * sampleWidth + (x - 1)];
-      final right = luminances[y * sampleWidth + (x + 1)];
-
-      // Discrete 2D Laplacian operator: (4 * center - top - bottom - left - right)
-      final lap = (4 * center - top - bottom - left - right).abs();
+      final c = luminances[y * sampleWidth + x];
+      final t = luminances[(y - 1) * sampleWidth + x];
+      final b = luminances[(y + 1) * sampleWidth + x];
+      final l = luminances[y * sampleWidth + (x - 1)];
+      final r = luminances[y * sampleWidth + (x + 1)];
+      final lap = (4 * c - t - b - l - r).abs();
       laplacians.add(lap);
       sumLaplacian += lap;
     }
   }
 
+  double laplacianVariance = 0.0;
   if (laplacians.isNotEmpty) {
     final meanLap = sumLaplacian / laplacians.length;
     double sumSqLap = 0.0;
@@ -183,57 +194,9 @@ ImageValidationResult _analyzeImageBytes(_ValidationParams params) {
     laplacianVariance = (sumSqLap / laplacians.length) * 10000.0;
   }
 
-  if (laplacianVariance < 5.0) {
+  // Threshold calibrated for live camera captures (not vector art / screenshots)
+  if (laplacianVariance < 2.0) {
     return ImageValidationResult.failure(AppStrings.imageTooBlurry);
-  }
-
-  // Feature-Dependent Object / Subject Detection
-  double centerVariance = 0.0;
-  double borderVariance = 0.0;
-
-  // Calculate detail variance in central 50% box vs outer border
-  final cXMin = (sampleWidth * 0.25).toInt();
-  final cXMax = (sampleWidth * 0.75).toInt();
-  final cYMin = (sampleHeight * 0.25).toInt();
-  final cYMax = (sampleHeight * 0.75).toInt();
-
-  final List<double> centerLums = [];
-  final List<double> borderLums = [];
-
-  for (int y = 0; y < sampleHeight; y++) {
-    for (int x = 0; x < sampleWidth; x++) {
-      final lum = luminances[y * sampleWidth + x];
-      if (x >= cXMin && x <= cXMax && y >= cYMin && y <= cYMax) {
-        centerLums.add(lum);
-      } else {
-        borderLums.add(lum);
-      }
-    }
-  }
-
-  double calcVariance(List<double> list) {
-    if (list.isEmpty) return 0.0;
-    final mean = list.reduce((a, b) => a + b) / list.length;
-    double sqDiff = 0.0;
-    for (final v in list) {
-      final d = v - mean;
-      sqDiff += d * d;
-    }
-    return sqDiff / list.length;
-  }
-
-  centerVariance = calcVariance(centerLums);
-  borderVariance = calcVariance(borderLums);
-  final subjectFocusScore = centerVariance / (borderVariance + 0.001);
-
-  // Apply Feature-Specific Checks
-  if (params.featureTarget == AiFeatureTarget.imageTo3d ||
-      params.featureTarget == AiFeatureTarget.characterConsistency ||
-      params.featureTarget == AiFeatureTarget.backgroundReplacement) {
-    // Requires a distinct foreground subject or clear object in central area
-    if (centerVariance < 0.01 || subjectFocusScore < 0.15) {
-      return ImageValidationResult.failure(AppStrings.imageNoSubjectDetected);
-    }
   }
 
   return ImageValidationResult.success(
@@ -243,6 +206,6 @@ ImageValidationResult _analyzeImageBytes(_ValidationParams params) {
     brightness: meanLuminance,
     contrastScore: stdDevLuminance,
     blurScore: laplacianVariance,
-    subjectFocusScore: subjectFocusScore,
+    subjectFocusScore: 1.0,
   );
 }

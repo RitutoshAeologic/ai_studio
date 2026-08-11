@@ -3,6 +3,7 @@ import 'package:ai_studio/core/constants/app_strings.dart';
 import 'package:ai_studio/core/utils/image_validator.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
+import 'package:image_picker/image_picker.dart';
 
 void main() {
   late String tempDir;
@@ -38,20 +39,14 @@ void main() {
     expect(result.errorMessage, AppStrings.imageTooSmall);
   });
 
-  test('Validates a sharp image with clear subject for Image to 3D', () async {
+  test('GALLERY: Validates a sharp image with clear subject for Image to 3D',
+      () async {
     final image = img.Image(width: 512, height: 512);
-    // Draw background grid
+    // Draw high-contrast central subject with detailed pattern
     for (int y = 0; y < 512; y++) {
       for (int x = 0; x < 512; x++) {
-        final val = (x + y) % 2 == 0 ? 50 : 70;
+        final val = (x + y) % 2 == 0 ? 50 : 200;
         image.setPixel(x, y, img.ColorRgb8(val, val, val));
-      }
-    }
-    // Draw high-contrast central subject with detailed pattern
-    for (int y = 150; y < 350; y++) {
-      for (int x = 150; x < 350; x++) {
-        final val = (x * y) % 255;
-        image.setPixel(x, y, img.ColorRgb8(val, 255 - val, 200));
       }
     }
 
@@ -59,9 +54,11 @@ void main() {
     final validFile = File('$tempDir/valid_subject.png');
     await validFile.writeAsBytes(pngBytes);
 
+    // Gallery source → only integrity check, no blur/blank pixel math
     final result = await ImageValidator.validateImage(
       filePath: validFile.path,
       featureTarget: AiFeatureTarget.imageTo3d,
+      imageSource: ImageSource.gallery,
     );
 
     expect(result.isValid, true);
@@ -70,7 +67,37 @@ void main() {
     expect(result.height, 512);
   });
 
-  test('Rejects completely blank/monochrome image', () async {
+  test('GALLERY: Accepts UI screenshots, illustrations, and vector artwork',
+      () async {
+    final image = img.Image(width: 300, height: 300);
+    // Flat-color center (simulates a UI card/vector illustration)
+    for (int y = 0; y < 300; y++) {
+      for (int x = 0; x < 300; x++) {
+        if (x < 75 || x > 225 || y < 75 || y > 225) {
+          final val = (x * y) % 255;
+          image.setPixel(x, y, img.ColorRgb8(val, 255 - val, 100));
+        } else {
+          image.setPixel(x, y, img.ColorRgb8(120, 120, 120));
+        }
+      }
+    }
+
+    final pngBytes = img.encodePng(image);
+    final uiFile = File('$tempDir/ui_screenshot.png');
+    await uiFile.writeAsBytes(pngBytes);
+
+    // Gallery source → passes regardless of flat areas (no pixel heuristics)
+    final result = await ImageValidator.validateImage(
+      filePath: uiFile.path,
+      featureTarget: AiFeatureTarget.imageTo3d,
+      imageSource: ImageSource.gallery,
+    );
+
+    expect(result.isValid, true);
+    expect(result.errorMessage, null);
+  });
+
+  test('CAMERA: Rejects completely blank/covered lens image', () async {
     final image = img.Image(width: 300, height: 300);
     img.fill(image, color: img.ColorRgb8(255, 255, 255)); // Pure white
 
@@ -78,40 +105,38 @@ void main() {
     final blankFile = File('$tempDir/blank_white.png');
     await blankFile.writeAsBytes(pngBytes);
 
+    // Camera source → pixel analysis runs, blank lens is rejected
     final result = await ImageValidator.validateImage(
       filePath: blankFile.path,
       featureTarget: AiFeatureTarget.generalAi,
+      imageSource: ImageSource.camera,
     );
 
     expect(result.isValid, false);
     expect(result.errorMessage, AppStrings.imageBlankOrExtremeBrightness);
   });
 
-  test('Rejects feature target requiring subject when image lacks central object focus',
-      () async {
-    final image = img.Image(width: 300, height: 300);
-    // Draw high variance border but uniform flat center
-    for (int y = 0; y < 300; y++) {
-      for (int x = 0; x < 300; x++) {
-        if (x < 75 || x > 225 || y < 75 || y > 225) {
-          final val = (x * y) % 255;
-          image.setPixel(x, y, img.ColorRgb8(val, 255 - val, 100));
-        } else {
-          image.setPixel(x, y, img.ColorRgb8(120, 120, 120)); // Flat center
-        }
+  test('CAMERA: Accepts a sharp real-world camera capture', () async {
+    final image = img.Image(width: 400, height: 400);
+    for (int y = 0; y < 400; y++) {
+      for (int x = 0; x < 400; x++) {
+        final val = (x * y) % 255;
+        image.setPixel(x, y, img.ColorRgb8(val, 255 - val, (x + y) % 200));
       }
     }
 
     final pngBytes = img.encodePng(image);
-    final noSubjectFile = File('$tempDir/no_subject.png');
-    await noSubjectFile.writeAsBytes(pngBytes);
+    final cameraFile = File('$tempDir/camera_capture.png');
+    await cameraFile.writeAsBytes(pngBytes);
 
+    // Camera source → sharp image passes both blank + blur checks
     final result = await ImageValidator.validateImage(
-      filePath: noSubjectFile.path,
+      filePath: cameraFile.path,
       featureTarget: AiFeatureTarget.imageTo3d,
+      imageSource: ImageSource.camera,
     );
 
-    expect(result.isValid, false);
-    expect(result.errorMessage, AppStrings.imageNoSubjectDetected);
+    expect(result.isValid, true);
+    expect(result.errorMessage, null);
   });
 }

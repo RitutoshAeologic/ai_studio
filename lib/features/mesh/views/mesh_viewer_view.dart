@@ -5,6 +5,7 @@ import 'package:o3d/o3d.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/url_helper.dart';
 import '../../../core/widgets/aperture_indicator.dart';
 
 /// Interactive 3D Mesh Renderer modal utilizing `o3d` for rendering .glb mesh files.
@@ -40,10 +41,12 @@ class _MeshViewerModalState extends State<MeshViewerModal> {
   final O3DController _controller = O3DController();
   bool _isLoading = true;
   double _loadProgress = 0.5;
+  late Future<String> _resolvedMeshUrlFuture;
 
   @override
   void initState() {
     super.initState();
+    _resolvedMeshUrlFuture = UrlHelper.resolveStorageUrl(widget.meshUrl);
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) {
         setState(() {
@@ -139,12 +142,19 @@ class _MeshViewerModalState extends State<MeshViewerModal> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12.r),
-                  child: O3D.network(
-                    src: widget.meshUrl,
-                    controller: _controller,
-                    autoRotate: true,
-                    cameraControls: true,
-                    backgroundColor: AppColors.surfaceCard,
+                  child: FutureBuilder<String>(
+                    future: _resolvedMeshUrlFuture,
+                    builder: (context, snapshot) {
+                      final resolvedUrl =
+                          snapshot.data ?? UrlHelper.normalizeUrl(widget.meshUrl);
+                      return O3D.network(
+                        src: resolvedUrl,
+                        controller: _controller,
+                        autoRotate: true,
+                        cameraControls: true,
+                        backgroundColor: AppColors.surfaceCard,
+                      );
+                    },
                   ),
                 ),
 

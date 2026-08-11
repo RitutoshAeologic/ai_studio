@@ -1,4 +1,4 @@
-// File generated based on google-services.json for AI Studio
+// File generated based on google-services.json and GoogleService-Info.plist for AI Studio
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
@@ -50,10 +50,11 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCjUwuHc-265GBzWY96CsUYgIK7WqwOHJE',
-    appId: '1:799730875496:android:e8b7285fc4a577daa30fdd',
+    apiKey: 'AIzaSyCxh9BWRRkqbNcrAwQrGfaoUMH7xp0PYsc',
+    appId: '1:799730875496:ios:768dfdccc88c882ca30fdd',
     messagingSenderId: '799730875496',
     projectId: 'ai-studio-637ab',
     storageBucket: 'ai-studio-637ab.firebasestorage.app',
+    iosBundleId: 'com.aeologic.adhoc.aistudio',
   );
 }
