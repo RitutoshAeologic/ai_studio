@@ -10,10 +10,11 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/logger.dart';
+import '../../../core/utils/url_helper.dart';
 import '../../../core/widgets/aperture_indicator.dart';
 
 /// Fullscreen high-resolution result viewer for image outputs (IMAGE_GEN / BG_REMOVAL / THEME_CHANGE).
-/// Responsive layout using ScreenUtil, AppStrings, AppColors, and AppTextStyles per ui_ux.md.
 class ImageResultModal extends StatefulWidget {
   final String imageUrl;
   final String? title;
@@ -52,19 +53,36 @@ class _ImageResultModalState extends State<ImageResultModal> {
   bool _isSaving = false;
   bool _isSharing = false;
 
+  String get _normalizedUrl => UrlHelper.normalizeUrl(widget.imageUrl);
+
   Future<File?> _downloadTempFile() async {
     try {
-      final response = await http.get(Uri.parse(widget.imageUrl));
-      if (response.statusCode == 200) {
+      final url = _normalizedUrl;
+      if (url.isEmpty) {
+        Logger.w('Download aborted: empty image URL');
+        return null;
+      }
+      Logger.i('Downloading image for save/share from $url');
+
+      final response = await http
+          .get(
+            Uri.parse(url),
+            headers: UrlHelper.ngrokHeaders,
+          )
+          .timeout(const Duration(seconds: 20));
+
+      if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
         final tempDir = await getTemporaryDirectory();
         final file = File(
           '${tempDir.path}/ai_studio_${DateTime.now().millisecondsSinceEpoch}.jpg',
         );
         await file.writeAsBytes(response.bodyBytes);
         return file;
+      } else {
+        Logger.w('Image download failed with HTTP ${response.statusCode}');
       }
-    } catch (e) {
-      debugPrint('Error downloading file: $e');
+    } catch (e, st) {
+      Logger.e('Error downloading image file', e, st);
     }
     return null;
   }
@@ -74,28 +92,45 @@ class _ImageResultModalState extends State<ImageResultModal> {
     try {
       final file = await _downloadTempFile();
       if (file != null) {
+        final hasAccess = await Gal.hasAccess(toAlbum: true);
+        if (!hasAccess) {
+          await Gal.requestAccess(toAlbum: true);
+        }
         await Gal.putImage(file.path);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
                 AppStrings.savedToGallery,
-                style: AppTextStyles.bodyM(color: Colors.white),
+                style: AppTextStyles.bodyMedium(color: AppColors.bone),
               ),
-              backgroundColor: AppColors.successIndicator,
+              backgroundColor: AppColors.statusSuccess,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Could not download image. Please check connection.',
+                style: AppTextStyles.bodyMedium(color: AppColors.bone),
+              ),
+              backgroundColor: AppColors.statusError,
             ),
           );
         }
       }
     } catch (e) {
+      Logger.e('Failed to save to gallery', e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '${AppStrings.saveFailed}$e',
-              style: AppTextStyles.bodyM(color: Colors.white),
+              'Save failed: $e',
+              style: AppTextStyles.bodyMedium(color: AppColors.bone),
             ),
-            backgroundColor: AppColors.errorIndicator,
+            backgroundColor: AppColors.statusError,
           ),
         );
       }
@@ -111,19 +146,32 @@ class _ImageResultModalState extends State<ImageResultModal> {
       if (file != null) {
         // ignore: deprecated_member_use
         await Share.shareXFiles(
-          [XFile(file.path)],
+          [XFile(file.path, mimeType: 'image/jpeg')],
           text: AppStrings.createdWithAiStudio,
         );
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Could not download image to share. Please check connection.',
+                style: AppTextStyles.bodyMedium(color: AppColors.bone),
+              ),
+              backgroundColor: AppColors.statusError,
+            ),
+          );
+        }
       }
     } catch (e) {
+      Logger.e('Failed to share image', e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '${AppStrings.shareFailed}$e',
-              style: AppTextStyles.bodyM(color: Colors.white),
+              'Share failed: $e',
+              style: AppTextStyles.bodyMedium(color: AppColors.bone),
             ),
-            backgroundColor: AppColors.errorIndicator,
+            backgroundColor: AppColors.statusError,
           ),
         );
       }
@@ -137,7 +185,7 @@ class _ImageResultModalState extends State<ImageResultModal> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.88,
       decoration: BoxDecoration(
-        color: AppColors.bgApp,
+        color: AppColors.ink,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       child: Column(
@@ -154,15 +202,13 @@ class _ImageResultModalState extends State<ImageResultModal> {
               children: [
                 Text(
                   widget.title ?? AppStrings.generatedResult,
-                  style: AppTextStyles.headingS(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTextStyles.headingSmall(),
                 ),
                 const Spacer(),
                 IconButton(
                   icon: Icon(
                     Icons.close_rounded,
-                    color: AppColors.textMuted,
+                    color: AppColors.slate,
                     size: 20.r,
                   ),
                   onPressed: () => Navigator.of(context).pop(),
@@ -181,21 +227,37 @@ class _ImageResultModalState extends State<ImageResultModal> {
                   minScale: 0.8,
                   maxScale: 4.0,
                   child: CachedNetworkImage(
-                    imageUrl: widget.imageUrl,
+                    imageUrl: _normalizedUrl,
+                    httpHeaders: UrlHelper.ngrokHeaders,
                     fit: BoxFit.contain,
                     placeholder: (context, url) => Center(
                       child: ApertureIndicator(
                         size: 48.r,
-                        color: AppColors.primaryAction,
+                        color: AppColors.ember,
                       ),
                     ),
-                    errorWidget: (context, url, error) => Center(
-                      child: Icon(
-                        Icons.broken_image_outlined,
-                        color: AppColors.errorIndicator,
-                        size: 48.r,
-                      ),
-                    ),
+                    errorWidget: (context, url, error) {
+                      Logger.w('CachedNetworkImage error loading $url: $error');
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.broken_image_outlined,
+                              color: AppColors.statusError,
+                              size: 48.r,
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(
+                              'Unable to load image',
+                              style: AppTextStyles.bodyMedium(
+                                color: AppColors.slate,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -206,7 +268,7 @@ class _ImageResultModalState extends State<ImageResultModal> {
           Container(
             padding: EdgeInsets.all(20.r),
             decoration: BoxDecoration(
-              color: AppColors.surfaceCard,
+              color: AppColors.surface,
               border: Border(
                 top: BorderSide(color: AppColors.borderSubtle, width: 1.r),
               ),
@@ -222,12 +284,12 @@ class _ImageResultModalState extends State<ImageResultModal> {
                             height: 18.r,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.r,
-                              color: AppColors.primaryAction,
+                              color: AppColors.ember,
                             ),
                           )
                         : Icon(
                             Icons.file_download_outlined,
-                            color: AppColors.primaryAction,
+                            color: AppColors.ember,
                             size: 18.r,
                           ),
                     label: Text(
@@ -235,14 +297,13 @@ class _ImageResultModalState extends State<ImageResultModal> {
                           ? AppStrings.savingEllipsis
                           : AppStrings.saveToGallery,
                       style: AppTextStyles.labelMedium(
-                        color: AppColors.primaryAction,
-                        fontWeight: FontWeight.w600,
+                        color: AppColors.ember,
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 14.h),
                       side: BorderSide(
-                        color: AppColors.primaryAction,
+                        color: AppColors.ember,
                         width: 1.5.r,
                       ),
                       shape: RoundedRectangleBorder(
@@ -261,12 +322,12 @@ class _ImageResultModalState extends State<ImageResultModal> {
                             height: 18.r,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.r,
-                              color: Colors.white,
+                              color: AppColors.bone,
                             ),
                           )
                         : Icon(
                             Icons.share_outlined,
-                            color: Colors.white,
+                            color: AppColors.bone,
                             size: 18.r,
                           ),
                     label: Text(
@@ -274,13 +335,12 @@ class _ImageResultModalState extends State<ImageResultModal> {
                           ? AppStrings.sharingEllipsis
                           : AppStrings.share,
                       style: AppTextStyles.buttonLabel(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                        color: AppColors.bone,
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryAction,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.ember,
+                      foregroundColor: AppColors.bone,
                       padding: EdgeInsets.symmetric(vertical: 14.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.r),

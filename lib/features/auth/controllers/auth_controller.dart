@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:ai_studio/app/routes/app_routes.dart';
 import 'package:ai_studio/core/constants/app_strings.dart';
 import 'package:ai_studio/core/error/error_handler.dart';
+import 'package:ai_studio/core/services/fcm_service.dart';
 import 'package:ai_studio/core/utils/logger.dart';
 import 'package:ai_studio/domain/entities/user_entity.dart';
 import 'package:ai_studio/domain/repositories/auth_repository.dart';
@@ -147,6 +148,8 @@ class AuthController extends GetxController {
         (user) {
           Logger.i('User signed in successfully: ${user.uid}');
           currentUser.value = user;
+          // Initialize FCM after successful sign-in (fire-and-forget).
+          unawaited(FcmService.instance.initialize(uid: user.uid));
           unawaited(Get.offAllNamed(AppRoutes.homeShell));
         },
         (failure) {
@@ -180,6 +183,8 @@ class AuthController extends GetxController {
         (user) {
           Logger.i('User registered successfully: ${user.uid}');
           currentUser.value = user;
+          // Initialize FCM after successful registration (fire-and-forget).
+          unawaited(FcmService.instance.initialize(uid: user.uid));
           unawaited(Get.offAllNamed(AppRoutes.homeShell));
         },
         (failure) {
@@ -196,6 +201,8 @@ class AuthController extends GetxController {
   }
 
   Future<void> signOut() async {
+    // Clean up FCM token before signing out.
+    await FcmService.instance.onSignOut();
     final result = await _authRepository.signOut();
     result.fold(
       (_) {

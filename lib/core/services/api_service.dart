@@ -59,16 +59,27 @@ class GenerateJobRequest {
 
 /// Single HTTP client for all backend API calls.
 ///
+/// **Base URL configuration**:
+/// Override at build time without code changes:
+///   `flutter run --dart-define=API_BASE_URL=https://your-cloud-run-url.run.app`
+///   `flutter build apk --dart-define=API_BASE_URL=https://your-cloud-run-url.run.app`
+/// Defaults to the ngrok dev tunnel when no dart-define is provided.
+///
 /// **SECURITY NOTE FOR BACKEND DEV**:
 /// `GET /wallet/{user_id}` currently lacks authorization header verification on the live backend,
 /// unlike `/v1/generateJob` and `/jobs` which both enforce Authorization Bearer tokens.
 /// Any client can read any user's balance by probing a user_id path. Please add Authorization
 /// header checking or rely purely on Firestore real-time security rules for wallet reads.
 class ApiService {
-  /// Live backend URL — ngrok free tunnel for active testing.
-  /// (Must be swapped for stable Cloud Run URL in production builds).
-  static const String _liveBaseUrl =
-      'https://handoff-plural-concise.ngrok-free.dev';
+  /// Build-time configurable base URL via --dart-define=API_BASE_URL=<url>.
+  /// Falls back to the ngrok dev tunnel when no dart-define is provided.
+  static const String _liveBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://handoff-plural-concise.ngrok-free.dev',
+  );
+
+  /// Public getter for active backend base URL.
+  static String get baseUrl => _liveBaseUrl;
 
   /// Set to false to interact directly with the live ngrok backend.
   static const bool _useStub = false;

@@ -89,9 +89,9 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
     );
 
     result.fold(
-      (url) {
+      (uploadResult) {
         setState(() {
-          _uploadedImageUrl = url;
+          _uploadedImageUrl = uploadResult.downloadUrl;
           _isUploadingImage = false;
         });
       },

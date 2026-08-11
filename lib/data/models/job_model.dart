@@ -41,9 +41,15 @@ class JobModel extends JobEntity {
       status: JobStatus.fromString(data['status'] as String? ?? 'idle'),
       cost: (data['cost'] as num?)?.toInt() ?? 0,
       params: JobParams.fromJson(paramsRaw),
-      outputUrl: data['outputUrl'] as String?,
-      meshUrl: data['meshUrl'] as String?,
-      error: data['error'] as String?,
+      outputUrl: (data['outputUrl'] as String?) ??
+          (data['resultUrl'] as String?) ??
+          (data['output_url'] as String?) ??
+          (data['result'] as String?) ??
+          (data['url'] as String?),
+      meshUrl: (data['meshUrl'] as String?) ??
+          (data['mesh_url'] as String?) ??
+          (data['resultMeshUrl'] as String?),
+      error: (data['error'] as String?) ?? (data['errorMessage'] as String?),
       createdAt: createdAt,
     );
   }

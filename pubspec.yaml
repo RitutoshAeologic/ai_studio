@@ -53,6 +53,10 @@ dependencies:
   firebase_auth: ^6.2.1
   cloud_firestore: ^6.1.1
   firebase_storage: ^13.1.1
+  firebase_messaging: ^16.5.0
+
+  # Networking & Connectivity
+  connectivity_plus: ^6.1.4
 
   # Media & Picker Utilities
   cached_network_image: ^3.4.1

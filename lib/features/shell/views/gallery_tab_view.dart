@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/url_helper.dart';
 import '../../../core/widgets/aperture_indicator.dart';
 import '../../../data/models/job_model.dart';
 import '../../../domain/entities/job_entity.dart';
@@ -130,18 +131,19 @@ class GalleryTabView extends StatelessWidget {
             if (job.outputUrl != null && job.outputUrl!.isNotEmpty)
               Positioned.fill(
                 child: CachedNetworkImage(
-                  imageUrl: job.outputUrl!,
+                  imageUrl: UrlHelper.normalizeUrl(job.outputUrl!),
+                  httpHeaders: UrlHelper.ngrokHeaders,
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Center(
                     child: ApertureIndicator(
                       size: 28.r,
-                      color: AppColors.primaryAction,
+                      color: AppColors.ember,
                     ),
                   ),
                   errorWidget: (context, url, error) => Center(
                     child: Icon(
                       Icons.broken_image_rounded,
-                      color: AppColors.textMuted,
+                      color: AppColors.slate,
                       size: 32.r,
                     ),
                   ),
