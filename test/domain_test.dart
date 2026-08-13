@@ -39,6 +39,7 @@ void main() {
 
     test('JobType and JobStatus string parsing', () {
       expect(JobType.fromString('IMAGE_GEN'), JobType.imageGen);
+      expect(JobType.fromString('IMAGE_3D'), JobType.meshGen);
       expect(JobType.fromString('MESH_GEN'), JobType.meshGen);
       expect(JobType.fromString('BG_REMOVAL'), JobType.bgRemoval);
       expect(JobType.fromString('THEME_CHANGE'), JobType.themeChange);

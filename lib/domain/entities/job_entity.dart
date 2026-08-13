@@ -1,7 +1,7 @@
 /// Job type — mirrors Firestore `type` field strings exactly.
 enum JobType {
   imageGen('IMAGE_GEN'),
-  meshGen('MESH_GEN'),
+  meshGen('IMAGE_3D'),
   bgRemoval('BG_REMOVAL'),
   themeChange('THEME_CHANGE');
 
@@ -9,6 +9,9 @@ enum JobType {
   final String firestoreValue;
 
   static JobType fromString(String value) {
+    if (value == 'IMAGE_3D' || value == 'MESH_GEN') {
+      return JobType.meshGen;
+    }
     return JobType.values.firstWhere(
       (t) => t.firestoreValue == value,
       orElse: () => JobType.imageGen,

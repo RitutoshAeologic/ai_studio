@@ -92,8 +92,13 @@ abstract class AppStrings {
   static const String takePhoto = 'Take Photo';
   static const String selectInputImageBgRemovalNotice =
       'Please select an input image for background removal.';
+  static const String selectInputImageMeshNotice =
+      'Please select an input image for 3D Mesh generation.';
+  static const String selectInputImageThemeChangeNotice =
+      'Please select an input image for theme change.';
   static const String enterDescriptionNotice =
       'Please enter a description or pick a theme preset.';
+  static const String resetSelection = 'Reset Selection';
   static const String imageUploadFailedNotice = 'Image upload failed: ';
 
   // 3D Mesh Viewer Strings

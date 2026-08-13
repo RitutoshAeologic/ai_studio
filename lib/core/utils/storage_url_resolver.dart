@@ -32,14 +32,14 @@ abstract class StorageUrlResolver {
       return _urlCache[trimmed]!;
     }
 
-    // 3. Already formatted Firebase Storage download URL with alt=media
+    // 3. Already formatted Firebase Storage download URL containing active signed token
     if (trimmed.contains('firebasestorage.googleapis.com') &&
-        trimmed.contains('alt=media')) {
+        trimmed.contains('token=')) {
       _urlCache[trimmed] = trimmed;
       return trimmed;
     }
 
-    // 4. Parse URI into precise Firebase Storage Reference (handles https://storage.googleapis.com/ & gs://)
+    // 4. Parse URI into precise Firebase Storage Reference (handles https://storage.googleapis.com/, firebasestorage.googleapis.com, & gs://)
     final ref = parseStorageReference(trimmed);
     if (ref != null) {
       try {
@@ -76,7 +76,8 @@ abstract class StorageUrlResolver {
     return trimmed;
   }
 
-  /// Parses raw storage URLs (`gs://bucket/path` or `https://storage.googleapis.com/bucket/path`)
+  /// Parses raw storage URLs (`gs://bucket/path`, `https://storage.googleapis.com/bucket/path`,
+  /// or `https://firebasestorage.googleapis.com/v0/b/bucket/o/path`)
   /// into a targeted [Reference] bound to the specific Firebase Storage bucket.
   static Reference? parseStorageReference(String rawUrl) {
     try {
@@ -95,6 +96,20 @@ abstract class StorageUrlResolver {
         if (pathSegments.length >= 2) {
           final bucket = pathSegments.first;
           final objectPath = pathSegments.sublist(1).join('/');
+          return FirebaseStorage.instanceFor(bucket: bucket).ref(objectPath);
+        }
+      }
+
+      // Handle https://firebasestorage.googleapis.com/v0/b/bucket/o/path
+      if (rawUrl.contains('firebasestorage.googleapis.com/v0/b/')) {
+        final uri = Uri.parse(rawUrl);
+        final pathSegments = uri.pathSegments;
+        final bIndex = pathSegments.indexOf('b');
+        final oIndex = pathSegments.indexOf('o');
+        if (bIndex != -1 && oIndex != -1 && pathSegments.length > oIndex + 1) {
+          final bucket = pathSegments[bIndex + 1];
+          final rawObjectPath = pathSegments.sublist(oIndex + 1).join('/');
+          final objectPath = Uri.decodeComponent(rawObjectPath);
           return FirebaseStorage.instanceFor(bucket: bucket).ref(objectPath);
         }
       }

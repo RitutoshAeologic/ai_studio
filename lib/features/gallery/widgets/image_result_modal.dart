@@ -38,15 +38,14 @@ class ImageResultModal extends StatefulWidget {
     String? jobId,
     JobEntity? job,
   }) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => ImageResultModal(
-        imageUrl: imageUrl,
-        title: title,
-        jobId: jobId,
-        job: job,
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ImageResultModal(
+          imageUrl: imageUrl,
+          title: title,
+          jobId: jobId,
+          job: job,
+        ),
       ),
     );
   }
@@ -224,7 +223,7 @@ class _ImageResultModalState extends State<ImageResultModal> {
               final jobCtrl = Get.find<JobController>();
               final success = await jobCtrl.deleteJob(widget.job!);
               if (mounted) {
-                Navigator.of(context).pop(); // Close modal
+                Navigator.of(context).pop(); // Close full page viewer
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
@@ -252,58 +251,59 @@ class _ImageResultModalState extends State<ImageResultModal> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.88,
-      decoration: BoxDecoration(
-        color: AppColors.ink,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      child: Column(
-        children: [
-          // ── Header Bar ─────────────────────────────────────────────────────
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: AppColors.borderSubtle, width: 1.r),
+    return Scaffold(
+      backgroundColor: AppColors.bgApp,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ── Header Bar ─────────────────────────────────────────────────────
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceCard,
+                border: Border(
+                  bottom: BorderSide(color: AppColors.borderSubtle, width: 1.r),
+                ),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.arrow_back_rounded,
+                      color: AppColors.textPrimary,
+                      size: 24.r,
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      widget.title ?? AppStrings.generatedResult,
+                      style: AppTextStyles.headingSmall(),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (widget.job != null)
+                    IconButton(
+                      icon: _isDeleting
+                          ? SizedBox(
+                              width: 18.r,
+                              height: 18.r,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.r,
+                                color: AppColors.statusError,
+                              ),
+                            )
+                          : Icon(
+                              Icons.delete_outline_rounded,
+                              color: AppColors.statusError,
+                              size: 22.r,
+                            ),
+                      onPressed: _isDeleting ? null : _confirmAndDelete,
+                    ),
+                ],
               ),
             ),
-            child: Row(
-              children: [
-                Text(
-                  widget.title ?? AppStrings.generatedResult,
-                  style: AppTextStyles.headingSmall(),
-                ),
-                const Spacer(),
-                if (widget.job != null)
-                  IconButton(
-                    icon: _isDeleting
-                        ? SizedBox(
-                            width: 18.r,
-                            height: 18.r,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.r,
-                              color: AppColors.statusError,
-                            ),
-                          )
-                        : Icon(
-                            Icons.delete_outline_rounded,
-                            color: AppColors.statusError,
-                            size: 22.r,
-                          ),
-                    onPressed: _isDeleting ? null : _confirmAndDelete,
-                  ),
-                IconButton(
-                  icon: Icon(
-                    Icons.close_rounded,
-                    color: AppColors.slate,
-                    size: 20.r,
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
-            ),
-          ),
 
           // ── Main Image View ────────────────────────────────────────────────
           Expanded(
@@ -412,6 +412,8 @@ class _ImageResultModalState extends State<ImageResultModal> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
 }
+}
+

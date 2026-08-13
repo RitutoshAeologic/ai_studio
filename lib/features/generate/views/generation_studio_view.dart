@@ -50,7 +50,12 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
   void _selectMode(JobType type) {
     setState(() {
       _selectedJobType = type;
-      if (type == JobType.bgRemoval) {
+      if (type == JobType.meshGen) {
+        _isUsingCustomPrompt = false;
+        if (_selectedThemeId == null && PresetThemes.list.isNotEmpty) {
+          _selectedThemeId = PresetThemes.list.first.themeId;
+        }
+      } else if (type == JobType.bgRemoval) {
         _selectedThemeId = null;
       }
     });
@@ -58,9 +63,19 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
 
   void _selectTheme(int themeId) {
     setState(() {
-      _selectedThemeId = themeId;
-      _isUsingCustomPrompt = false;
-      _promptCtrl.clear();
+      if (_selectedThemeId == themeId) {
+        _selectedThemeId = null;
+      } else {
+        _selectedThemeId = themeId;
+        _isUsingCustomPrompt = false;
+        _promptCtrl.clear();
+      }
+    });
+  }
+
+  void _resetThemeSelection() {
+    setState(() {
+      _selectedThemeId = null;
     });
   }
 
@@ -68,6 +83,15 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
     setState(() {
       _isUsingCustomPrompt = true;
       _selectedThemeId = null;
+    });
+  }
+
+  void _switchToPresetGrid() {
+    setState(() {
+      _isUsingCustomPrompt = false;
+      if (_selectedThemeId == null && PresetThemes.list.isNotEmpty) {
+        _selectedThemeId = PresetThemes.list.first.themeId;
+      }
     });
   }
 
@@ -153,13 +177,21 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
   Future<void> _submitJob() async {
     final jobCtrl = Get.find<JobController>();
 
-    if (_selectedJobType == JobType.bgRemoval &&
+    if ((_selectedJobType == JobType.bgRemoval ||
+            _selectedJobType == JobType.meshGen ||
+            _selectedJobType == JobType.themeChange) &&
         _uploadedImageUrl == null &&
         _selectedImageFile == null) {
+      final notice = _selectedJobType == JobType.meshGen
+          ? AppStrings.selectInputImageMeshNotice
+          : _selectedJobType == JobType.themeChange
+              ? AppStrings.selectInputImageThemeChangeNotice
+              : AppStrings.selectInputImageBgRemovalNotice;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            AppStrings.selectInputImageBgRemovalNotice,
+            notice,
             style: AppTextStyles.bodyM(color: AppColors.creditGoldTitle),
           ),
           backgroundColor: AppColors.creditGoldBg,
@@ -170,7 +202,8 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
 
     if (_isUsingCustomPrompt &&
         _promptCtrl.text.trim().isEmpty &&
-        _selectedJobType != JobType.bgRemoval) {
+        _selectedJobType != JobType.bgRemoval &&
+        _selectedJobType != JobType.meshGen) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -258,6 +291,7 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
 
                   // Image Input Picker Section
                   if (_selectedJobType == JobType.bgRemoval ||
+                      _selectedJobType == JobType.meshGen ||
                       _selectedJobType == JobType.themeChange ||
                       _selectedJobType == JobType.imageGen) ...[
                     Row(
@@ -268,7 +302,9 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
                             color: AppColors.textMuted,
                           ),
                         ),
-                        if (_selectedJobType == JobType.bgRemoval)
+                        if (_selectedJobType == JobType.bgRemoval ||
+                            _selectedJobType == JobType.meshGen ||
+                            _selectedJobType == JobType.themeChange)
                           Text(
                             AppStrings.requiredTag,
                             style: AppTextStyles.labelSmall(
@@ -282,8 +318,9 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
                     SizedBox(height: 24.h),
                   ],
 
-                  // Prompt & Theme Section
-                  if (_selectedJobType != JobType.bgRemoval) ...[
+                  // Prompt & Theme Section for Image Gen & Theme Change
+                  if (_selectedJobType == JobType.imageGen ||
+                      _selectedJobType == JobType.themeChange) ...[
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -308,12 +345,7 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
                             ),
                             SizedBox(width: 12.w),
                             GestureDetector(
-                              onTap: () {
-                                if (_selectedThemeId == null &&
-                                    PresetThemes.list.isNotEmpty) {
-                                  _selectTheme(PresetThemes.list.first.themeId);
-                                }
-                              },
+                              onTap: _switchToPresetGrid,
                               child: Text(
                                 AppStrings.presetGridTab,
                                 style: AppTextStyles.labelSmall(
@@ -347,9 +379,7 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
                             color: AppColors.textPrimary,
                           ),
                           decoration: InputDecoration(
-                            hintText: _selectedJobType == JobType.meshGen
-                                ? AppStrings.meshPromptHint
-                                : AppStrings.genPromptHint,
+                            hintText: AppStrings.genPromptHint,
                             hintStyle: AppTextStyles.bodyM(
                               color: AppColors.textDisabled,
                             ),
@@ -359,84 +389,46 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
                         ),
                       ),
                     ] else ...[
-                      // Theme Preset Grid
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 2.2,
-                          crossAxisSpacing: 10.w,
-                          mainAxisSpacing: 10.h,
-                        ),
-                        itemCount: PresetThemes.list.length,
-                        itemBuilder: (context, index) {
-                          final theme = PresetThemes.list[index];
-                          final isSelected =
-                              _selectedThemeId == theme.themeId;
-
-                          return GestureDetector(
-                            onTap: () => _selectTheme(theme.themeId),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              padding: EdgeInsets.all(10.r),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? AppColors.accentGlowSoft
-                                    : AppColors.surfaceCard,
-                                borderRadius: BorderRadius.circular(10.r),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? AppColors.primaryAction
-                                      : AppColors.borderSubtle,
-                                  width: isSelected ? 1.5.r : 1.r,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    theme.icon,
-                                    color: isSelected
-                                        ? AppColors.primaryAction
-                                        : AppColors.textMuted,
-                                    size: 20.r,
-                                  ),
-                                  SizedBox(width: 8.w),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          theme.title,
-                                          style: AppTextStyles.labelMedium(
-                                            color: isSelected
-                                                ? AppColors.primaryAction
-                                                : AppColors.textPrimary,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        Text(
-                                          theme.category,
-                                          style: AppTextStyles.bodySmall(
-                                            color: AppColors.textMuted,
-                                          ),
-                                          maxLines: 1,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                      _buildPresetGrid(),
                     ],
+                  ],
+
+                  // Preset Grid Section for 3D Mesh Mode
+                  if (_selectedJobType == JobType.meshGen) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          AppStrings.presetGridTab.toUpperCase(),
+                          style: AppTextStyles.labelSmall(
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                        if (_selectedThemeId != null)
+                          GestureDetector(
+                            onTap: _resetThemeSelection,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.restart_alt_rounded,
+                                  size: 14.r,
+                                  color: AppColors.ember,
+                                ),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  AppStrings.resetSelection,
+                                  style: AppTextStyles.labelSmall(
+                                    color: AppColors.ember,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                    SizedBox(height: 8.h),
+                    _buildPresetGrid(),
                   ],
 
                   SizedBox(height: 32.h),
@@ -597,8 +589,14 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
                   final meshUrl = jobCtrl.meshUrl;
                   jobCtrl.stopWatching();
 
-                  if (meshUrl != null && meshUrl.isNotEmpty) {
-                    MeshViewerModal.show(context, meshUrl: meshUrl);
+                  final effectiveMesh = (meshUrl != null && meshUrl.isNotEmpty)
+                      ? meshUrl
+                      : (outputUrl != null && outputUrl.contains('.glb'))
+                          ? outputUrl
+                          : null;
+
+                  if (effectiveMesh != null) {
+                    MeshViewerModal.show(context, meshUrl: effectiveMesh);
                   } else if (outputUrl != null && outputUrl.isNotEmpty) {
                     ImageResultModal.show(context, imageUrl: outputUrl);
                   }
@@ -776,6 +774,82 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPresetGrid() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 2.2,
+        crossAxisSpacing: 10.w,
+        mainAxisSpacing: 10.h,
+      ),
+      itemCount: PresetThemes.list.length,
+      itemBuilder: (context, index) {
+        final theme = PresetThemes.list[index];
+        final isSelected = _selectedThemeId == theme.themeId;
+
+        return GestureDetector(
+          onTap: () => _selectTheme(theme.themeId),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: EdgeInsets.all(10.r),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppColors.accentGlowSoft
+                  : AppColors.surfaceCard,
+              borderRadius: BorderRadius.circular(10.r),
+              border: Border.all(
+                color: isSelected
+                    ? AppColors.primaryAction
+                    : AppColors.borderSubtle,
+                width: isSelected ? 1.5.r : 1.r,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  theme.icon,
+                  color: isSelected
+                      ? AppColors.primaryAction
+                      : AppColors.textMuted,
+                  size: 20.r,
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        theme.title,
+                        style: AppTextStyles.labelMedium(
+                          color: isSelected
+                              ? AppColors.primaryAction
+                              : AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        theme.category,
+                        style: AppTextStyles.bodySmall(
+                          color: AppColors.textMuted,
+                        ),
+                        maxLines: 1,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

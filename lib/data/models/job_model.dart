@@ -33,22 +33,32 @@ class JobModel extends JobEntity {
 
     final paramsRaw = data['params'] as Map<String, dynamic>? ?? {};
 
+    final rawOutput = (data['outputUrl'] as String?) ??
+        (data['resultUrl'] as String?) ??
+        (data['output_url'] as String?) ??
+        (data['result'] as String?) ??
+        (data['url'] as String?);
+
+    final rawMesh = (data['meshUrl'] as String?) ??
+        (data['mesh_url'] as String?) ??
+        (data['resultMeshUrl'] as String?);
+
+    final parsedType = JobType.fromString(data['type'] as String? ?? '');
+    final effectiveMeshUrl = rawMesh ??
+        ((parsedType == JobType.meshGen || (rawOutput?.contains('.glb') ?? false))
+            ? rawOutput
+            : null);
+
     return JobModel(
       jobId: data['jobId'] as String? ?? doc.id,
       userId: data['userId'] as String? ?? '',
-      type: JobType.fromString(data['type'] as String? ?? ''),
+      type: parsedType,
       tier: data['tier'] as String? ?? 'FAST',
       status: JobStatus.fromString(data['status'] as String? ?? 'idle'),
       cost: (data['cost'] as num?)?.toInt() ?? 0,
       params: JobParams.fromJson(paramsRaw),
-      outputUrl: (data['outputUrl'] as String?) ??
-          (data['resultUrl'] as String?) ??
-          (data['output_url'] as String?) ??
-          (data['result'] as String?) ??
-          (data['url'] as String?),
-      meshUrl: (data['meshUrl'] as String?) ??
-          (data['mesh_url'] as String?) ??
-          (data['resultMeshUrl'] as String?),
+      outputUrl: rawOutput,
+      meshUrl: effectiveMeshUrl,
       error: (data['error'] as String?) ?? (data['errorMessage'] as String?),
       createdAt: createdAt,
     );

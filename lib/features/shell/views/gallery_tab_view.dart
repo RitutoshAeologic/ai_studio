@@ -289,9 +289,18 @@ class GalleryTabView extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (job.status == JobStatus.completed) {
-          if (job.type == JobType.meshGen && job.meshUrl != null) {
-            MeshViewerModal.show(context, meshUrl: job.meshUrl!);
-          } else if (job.outputUrl != null) {
+          final glbUrl = (job.meshUrl != null && job.meshUrl!.isNotEmpty)
+              ? job.meshUrl
+              : (job.outputUrl != null && job.outputUrl!.contains('.glb'))
+                  ? job.outputUrl
+                  : null;
+
+          if (job.type == JobType.meshGen || glbUrl != null) {
+            final targetUrl = glbUrl ?? job.outputUrl;
+            if (targetUrl != null && targetUrl.isNotEmpty) {
+              MeshViewerModal.show(context, meshUrl: targetUrl);
+            }
+          } else if (job.outputUrl != null && job.outputUrl!.isNotEmpty) {
             ImageResultModal.show(context, imageUrl: job.outputUrl!, job: job);
           }
         }
