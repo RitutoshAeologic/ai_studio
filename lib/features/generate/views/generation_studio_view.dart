@@ -4,6 +4,7 @@ import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../app/routes/app_routes.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -48,6 +49,14 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
   }
 
   void _selectMode(JobType type) {
+    if (type == JobType.videoFaceSwap) {
+      Get.toNamed(AppRoutes.faceSwap);
+      return;
+    }
+    if (type == JobType.videoGen) {
+      Get.toNamed(AppRoutes.videoGen);
+      return;
+    }
     setState(() {
       _selectedJobType = type;
       if (type == JobType.bgRemoval) {
@@ -249,6 +258,18 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
                           JobType.themeChange,
                           AppStrings.themeChangeTab,
                           Icons.style_rounded,
+                        ),
+                        SizedBox(width: 8.w),
+                        _buildModeChip(
+                          JobType.videoFaceSwap,
+                          'Face Swap',
+                          Icons.face_retouching_natural_rounded,
+                        ),
+                        SizedBox(width: 8.w),
+                        _buildModeChip(
+                          JobType.videoGen,
+                          'Video Gen',
+                          Icons.videocam_rounded,
                         ),
                       ],
                     ),

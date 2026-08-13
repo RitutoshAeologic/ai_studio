@@ -10,6 +10,7 @@ abstract class AppRoutes {
   static const String themeChange = '/theme-change';
   static const String backgroundChange = '/background-change';
   static const String videoGen = '/video-gen';
+  static const String faceSwap = '/face-swap';
   static const String jobHistory = '/job-history';
 }
 

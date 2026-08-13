@@ -60,6 +60,20 @@ class ImageUploadService {
     }
   }
 
+  /// Pick video from gallery or camera.
+  Future<XFile?> pickVideo(ImageSource source) async {
+    try {
+      final XFile? file = await _picker.pickVideo(
+        source: source,
+        maxDuration: const Duration(minutes: 1),
+      );
+      return file;
+    } catch (e) {
+      Logger.w('Failed to pick video: $e');
+      return null;
+    }
+  }
+
   /// Upload file directly to Firebase Storage and return its public HTTPS download URL.
   ///
   /// Returns [Result.error] immediately if:
@@ -133,6 +147,71 @@ class ImageUploadService {
       Logger.e('Failed to upload image to Firebase Storage', e, st);
       return Error(NetworkFailure(
           'Image upload failed: ${e.toString()}. Your credits have not been deducted.'));
+    }
+  }
+
+  /// Upload video file directly to Firebase Storage and return its public HTTPS download URL.
+  Future<Result<ImageUploadResult, Failure>> uploadVideo({
+    required File file,
+    required String userId,
+  }) async {
+    final connectivityResult = await _connectivity.checkConnectivity();
+    if (connectivityResult.contains(ConnectivityResult.none) ||
+        connectivityResult.isEmpty) {
+      Logger.w('Upload aborted — no internet connection');
+      return const Error(
+        NetworkFailure('No internet connection — upload aborted. Your credits have not been deducted.'),
+      );
+    }
+
+    try {
+      _progressController.add(0.0);
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final ref = _storage.ref().child('user_inputs/$userId/video_$timestamp.mp4');
+
+      final uploadTask = ref.putFile(
+        file,
+        SettableMetadata(contentType: 'video/mp4'),
+      );
+
+      uploadTask.snapshotEvents.listen((snapshot) {
+        if (snapshot.totalBytes > 0) {
+          final progress = snapshot.bytesTransferred / snapshot.totalBytes;
+          _progressController.add(progress.clamp(0.0, 1.0));
+        }
+      });
+
+      final snapshot = await uploadTask.timeout(
+        const Duration(seconds: 300),
+        onTimeout: () {
+          uploadTask.cancel();
+          throw TimeoutException('Video upload timed out after 300 seconds');
+        },
+      );
+
+      if (snapshot.state != TaskState.success) {
+        Logger.w('Video upload ended in non-success state: ${snapshot.state}');
+        return const Error(NetworkFailure(
+            'Video upload did not complete. Your credits have not been deducted.'));
+      }
+
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+      _progressController.add(1.0);
+
+      Logger.i('Video uploaded: $downloadUrl (${snapshot.bytesTransferred} bytes)');
+      return Success(ImageUploadResult(
+        downloadUrl: downloadUrl,
+        bytesTransferred: snapshot.bytesTransferred,
+      ));
+    } on TimeoutException catch (e) {
+      Logger.w('Video upload timeout: $e');
+      return const Error(NetworkFailure(
+          'Video upload timed out — check your connection. Your credits have not been deducted.'));
+    } catch (e, st) {
+      Logger.e('Failed to upload video to Firebase Storage', e, st);
+      return Error(NetworkFailure(
+          'Video upload failed: ${e.toString()}. Your credits have not been deducted.'));
     }
   }
 
