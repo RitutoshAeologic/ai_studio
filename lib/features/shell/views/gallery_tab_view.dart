@@ -16,6 +16,7 @@ import '../../gallery/widgets/image_result_modal.dart';
 import '../../jobs/controllers/job_controller.dart';
 import '../../jobs/widgets/job_status_chip.dart';
 import '../../mesh/views/mesh_viewer_view.dart';
+import '../../video_generation/presentation/widgets/video_player_widget.dart';
 
 /// Gallery view tab displaying live history of generated assets with delete & auto-cleanup support.
 class GalleryTabView extends StatelessWidget {
@@ -315,7 +316,39 @@ class GalleryTabView extends StatelessWidget {
         child: Stack(
           children: [
             // Preview Content
-            if (job.outputUrl != null && job.outputUrl!.isNotEmpty)
+            if (job.type == JobType.videoGen ||
+                job.type == JobType.videoFaceSwap ||
+                (job.outputUrl != null && job.outputUrl!.toLowerCase().contains('.mp4')))
+              Positioned.fill(
+                child: Container(
+                  color: AppColors.surfaceInput,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      if (job.params.imageUrl != null && job.params.imageUrl!.isNotEmpty)
+                        Positioned.fill(
+                          child: AppNetworkImage(
+                            imageUrl: job.params.imageUrl!,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      Container(
+                        padding: EdgeInsets.all(8.r),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withAlpha(150),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.play_arrow_rounded,
+                          color: Colors.white,
+                          size: 28.r,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (job.outputUrl != null && job.outputUrl!.isNotEmpty)
               Positioned.fill(
                 child: AppNetworkImage(
                   imageUrl: job.outputUrl!,

@@ -75,7 +75,7 @@ class ApiService {
   /// Falls back to the ngrok dev tunnel when no dart-define is provided.
   static const String _liveBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://handoff-plural-concise.ngrok-free.dev',
+    defaultValue: 'https://recast-landmass-sedan.ngrok-free.dev',
   );
 
   /// Public getter for active backend base URL.

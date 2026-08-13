@@ -32,20 +32,23 @@ abstract class StorageUrlResolver {
       return _urlCache[trimmed]!;
     }
 
-    // 3. Already formatted Firebase Storage download URL containing active signed token
+    // 3. Already formatted Firebase Storage download URL with token
     if (trimmed.contains('firebasestorage.googleapis.com') &&
+        trimmed.contains('alt=media') &&
         trimmed.contains('token=')) {
       _urlCache[trimmed] = trimmed;
       return trimmed;
     }
 
-    // 4. Parse URI into precise Firebase Storage Reference (handles https://storage.googleapis.com/, firebasestorage.googleapis.com, & gs://)
+    // 4. Try fetching signed download URL via Firebase Storage SDK (provides &token=...)
     final ref = parseStorageReference(trimmed);
     if (ref != null) {
       try {
         final downloadUrl = await ref.getDownloadURL();
-        _urlCache[trimmed] = downloadUrl;
-        return downloadUrl;
+        if (downloadUrl.isNotEmpty) {
+          _urlCache[trimmed] = downloadUrl;
+          return downloadUrl;
+        }
       } on FirebaseException catch (e) {
         if (e.code == 'object-not-found' || e.message?.contains('404') == true) {
           Logger.w('Storage object not found on server (HTTP 404): $trimmed');
@@ -58,7 +61,7 @@ abstract class StorageUrlResolver {
       }
     }
 
-    // 5. Fallback URL transformation for storage.googleapis.com direct URLs if SDK lookup failed non-fatally
+    // 5. Fallback transform for storage.googleapis.com direct URLs into valid Firebase Storage download URLs
     if (trimmed.startsWith('https://storage.googleapis.com/')) {
       final uri = Uri.parse(trimmed);
       final pathSegments = uri.pathSegments;
@@ -66,10 +69,10 @@ abstract class StorageUrlResolver {
         final bucket = pathSegments.first;
         final objectPath = pathSegments.sublist(1).join('/');
         final encodedPath = Uri.encodeComponent(objectPath);
-        final fallbackUrl =
+        final firebaseUrl =
             'https://firebasestorage.googleapis.com/v0/b/$bucket/o/$encodedPath?alt=media';
-        _urlCache[trimmed] = fallbackUrl;
-        return fallbackUrl;
+        _urlCache[trimmed] = firebaseUrl;
+        return firebaseUrl;
       }
     }
 
@@ -111,6 +114,20 @@ abstract class StorageUrlResolver {
           final rawObjectPath = pathSegments.sublist(oIndex + 1).join('/');
           final objectPath = Uri.decodeComponent(rawObjectPath);
           return FirebaseStorage.instanceFor(bucket: bucket).ref(objectPath);
+        }
+      }
+
+      // Handle https://firebasestorage.googleapis.com/v0/b/bucket/o/path?alt=media
+      if (rawUrl.contains('firebasestorage.googleapis.com')) {
+        final uri = Uri.parse(rawUrl);
+        final pathSegments = uri.pathSegments;
+        final bIndex = pathSegments.indexOf('b');
+        final oIndex = pathSegments.indexOf('o');
+        if (bIndex != -1 && oIndex != -1 && bIndex + 1 < pathSegments.length && oIndex + 1 < pathSegments.length) {
+          final bucket = pathSegments[bIndex + 1];
+          final encodedPath = pathSegments[oIndex + 1];
+          final decodedPath = Uri.decodeComponent(encodedPath);
+          return FirebaseStorage.instanceFor(bucket: bucket).ref(decodedPath);
         }
       }
 

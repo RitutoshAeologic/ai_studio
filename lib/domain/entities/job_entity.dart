@@ -3,7 +3,9 @@ enum JobType {
   imageGen('IMAGE_GEN'),
   meshGen('IMAGE_3D'),
   bgRemoval('BG_REMOVAL'),
-  themeChange('THEME_CHANGE');
+  themeChange('THEME_CHANGE'),
+  videoGen('VIDEO_GEN'),
+  videoFaceSwap('VIDEO_FACE_SWAP');
 
   const JobType(this.firestoreValue);
   final String firestoreValue;
@@ -70,7 +72,9 @@ class JobParams {
   factory JobParams.fromJson(Map<String, dynamic> json) => JobParams(
         userPrompt: json['userPrompt'] as String?,
         themeId: json['themeId'] as int?,
-        imageUrl: json['imageUrl'] as String?,
+        imageUrl: json['imageUrl'] as String? ??
+            json['sourceImageUrl'] as String? ??
+            json['image_url'] as String?,
       );
 }
 
