@@ -44,6 +44,10 @@ class JobModel extends JobEntity {
       outputUrl: (data['outputUrl'] as String?) ??
           (data['resultUrl'] as String?) ??
           (data['output_url'] as String?) ??
+          (data['videoUrl'] as String?) ??
+          (data['video_url'] as String?) ??
+          (data['mediaUrl'] as String?) ??
+          (data['media_url'] as String?) ??
           (data['result'] as String?) ??
           (data['url'] as String?),
       meshUrl: (data['meshUrl'] as String?) ??

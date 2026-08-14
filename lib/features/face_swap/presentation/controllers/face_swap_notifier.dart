@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/services/image_upload_service.dart';
@@ -81,6 +82,7 @@ class FaceSwapController extends GetxController {
   final ImageUploadService _uploadService;
 
   late final Rx<FaceSwapState> state;
+  final RxList<VideoTemplate> templates = <VideoTemplate>[...VideoTemplate.catalog].obs;
 
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _jobSubscription;
   Timer? _estimatedProgressTimer;
@@ -94,6 +96,71 @@ class FaceSwapController extends GetxController {
     state = FaceSwapState(
       selectedTemplate: VideoTemplate.catalog.first,
     ).obs;
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    _loadStorageTemplates();
+  }
+
+  Future<void> _loadStorageTemplates() async {
+    try {
+      final storageRef = FirebaseStorage.instance.ref('templates/dance');
+      final listResult = await storageRef.listAll();
+      if (listResult.items.isNotEmpty) {
+        final List<VideoTemplate> dynamicList = [];
+        for (final item in listResult.items) {
+          try {
+            final downloadUrl = await item.getDownloadURL();
+            final name = item.name;
+            final matched = VideoTemplate.catalog.firstWhereOrNull(
+              (t) => t.videoUrl.contains(name) || t.id == name || name.contains(t.id),
+            );
+            if (matched != null) {
+              dynamicList.add(matched.copyWith(videoUrl: downloadUrl));
+            } else {
+              dynamicList.add(VideoTemplate(
+                id: name,
+                title: _formatFileNameToTitle(name),
+                category: 'Dance',
+                videoUrl: downloadUrl,
+                thumbnailUrl: VideoTemplate.getFallbackThumbnailFor(name),
+                badge: name.contains('uhd') || name.contains('2160') || name.contains('4k')
+                    ? '⚡ 4K UHD'
+                    : '🔥 1080p HD',
+                durationSeconds: 10,
+              ));
+            }
+          } catch (itemErr) {
+            Logger.w('Failed to get download URL for storage template ${item.name}: $itemErr');
+          }
+        }
+        if (dynamicList.isNotEmpty) {
+          templates.assignAll(dynamicList);
+          if (!state.value.selectedTemplate.isCustom) {
+            final updatedSelected = dynamicList.firstWhereOrNull(
+              (t) => t.id == state.value.selectedTemplate.id,
+            );
+            if (updatedSelected != null) {
+              state.value = state.value.copyWith(selectedTemplate: updatedSelected);
+            } else {
+              state.value = state.value.copyWith(selectedTemplate: dynamicList.first);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      Logger.w('FaceSwapController: Note loading storage templates: $e');
+    }
+  }
+
+  String _formatFileNameToTitle(String fileName) {
+    final clean = fileName
+        .replaceAll('.mp4', '')
+        .replaceAll('-', ' ')
+        .replaceAll('_', ' ');
+    return clean;
   }
 
   void selectTemplate(VideoTemplate template) {
