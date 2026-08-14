@@ -9,6 +9,7 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/services/image_upload_service.dart';
 import '../../../../core/utils/image_validator.dart';
 
+/// Clean character face picker with smooth 16.r curves and clear status.
 class SourceFacePicker extends StatefulWidget {
   final File? selectedFaceFile;
   final ValueChanged<File?> onFaceSelected;
@@ -82,9 +83,9 @@ class _SourceFacePickerState extends State<SourceFacePicker>
     HapticFeedback.lightImpact();
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surfaceCard,
+      backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -93,16 +94,16 @@ class _SourceFacePickerState extends State<SourceFacePicker>
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.photo_library_outlined, color: AppColors.primaryAction),
-                title: Text('Choose Face from Gallery', style: AppTextStyles.bodyM()),
+                leading: const Icon(Icons.photo_library_outlined, color: AppColors.ember),
+                title: Text('Choose Face from Gallery', style: AppTextStyles.bodyM(color: AppColors.bone)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickImage(context, ImageSource.gallery);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.camera_alt_outlined, color: AppColors.primaryAction),
-                title: Text('Take Face Photo with Camera', style: AppTextStyles.bodyM()),
+                leading: const Icon(Icons.camera_alt_outlined, color: AppColors.ember),
+                title: Text('Take Face Photo with Camera', style: AppTextStyles.bodyM(color: AppColors.bone)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickImage(context, ImageSource.camera);
@@ -125,59 +126,62 @@ class _SourceFacePickerState extends State<SourceFacePicker>
         Row(
           children: [
             Text(
-              '2. Attach Character Face Photo',
-              style: AppTextStyles.labelSmall(
-                color: AppColors.textMuted,
-                fontWeight: FontWeight.w600,
+              'Upload Face Photo',
+              style: AppTextStyles.labelMedium(
+                color: AppColors.bone,
+                fontWeight: FontWeight.w700,
               ),
             ),
             Text(
               ' *',
-              style: AppTextStyles.labelSmall(color: AppColors.primaryAction),
+              style: AppTextStyles.labelMedium(
+                color: AppColors.ember,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),
-        SizedBox(height: 10.h),
+        SizedBox(height: 12.h),
 
         if (selectedFile == null) ...[
-          // Empty State Picker Box
+          // Clean Empty State Picker Box
           GestureDetector(
             onTap: () => _showImageSourcePicker(context),
             child: Container(
               width: double.infinity,
-              padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 16.w),
+              padding: EdgeInsets.symmetric(vertical: 22.h, horizontal: 16.w),
               decoration: BoxDecoration(
-                color: AppColors.surfaceCard,
-                borderRadius: BorderRadius.circular(14.r),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16.r),
                 border: Border.all(
                   color: AppColors.borderSubtle,
-                  width: 1.5.r,
+                  width: 1.r,
                 ),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircleAvatar(
-                    radius: 26.r,
-                    backgroundColor: AppColors.accentGlowSoft,
+                    radius: 24.r,
+                    backgroundColor: AppColors.emberSoft,
                     child: Icon(
                       Icons.face_retouching_natural_rounded,
-                      color: AppColors.primaryAction,
-                      size: 28.r,
+                      color: AppColors.ember,
+                      size: 26.r,
                     ),
                   ),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: 10.h),
                   Text(
-                    'Tap to upload face / character photo',
+                    'Choose Character Face Photo',
                     style: AppTextStyles.labelMedium(
-                      color: AppColors.textPrimary,
+                      color: AppColors.bone,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    'Front-facing portrait with clear facial features gives the best result.',
-                    style: AppTextStyles.caption(color: AppColors.textMuted),
+                    'Front-facing portrait from gallery or camera',
+                    style: AppTextStyles.caption(color: AppColors.slate),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -185,33 +189,33 @@ class _SourceFacePickerState extends State<SourceFacePicker>
             ),
           ),
         ] else ...[
-          // Preview Selected Face Photo Card with Glowing Checkmark
+          // Clean Selected Face Photo Card
           Container(
             padding: EdgeInsets.all(12.r),
             decoration: BoxDecoration(
-              color: AppColors.surfaceCard,
-              borderRadius: BorderRadius.circular(14.r),
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16.r),
               border: Border.all(color: AppColors.statusSuccess, width: 1.5.r),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.statusSuccess.withAlpha(40),
-                  blurRadius: 12,
+                  color: AppColors.statusSuccess.withAlpha(30),
+                  blurRadius: 10,
                   spreadRadius: 1,
                 ),
               ],
             ),
             child: Row(
               children: [
-                // Face Photo Thumbnail with pulsing checkmark badge
+                // Face Photo Thumbnail with checkmark badge
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(10.r),
+                      borderRadius: BorderRadius.circular(12.r),
                       child: Image.file(
                         selectedFile,
-                        width: 72.r,
-                        height: 72.r,
+                        width: 68.r,
+                        height: 68.r,
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -248,43 +252,73 @@ class _SourceFacePickerState extends State<SourceFacePicker>
                           Icon(Icons.check_circle_rounded, color: AppColors.statusSuccess, size: 16.r),
                           SizedBox(width: 6.w),
                           Text(
-                            'Face Photo Attached',
-                            style: AppTextStyles.labelSmall(
-                              color: AppColors.textPrimary,
+                            'Face Ready',
+                            style: AppTextStyles.labelMedium(
+                              color: AppColors.statusSuccess,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
                       ),
-                      SizedBox(height: 4.h),
+                      SizedBox(height: 2.h),
                       Text(
-                        'Ready to swap onto the selected dance template.',
-                        style: AppTextStyles.caption(color: AppColors.textMuted),
+                        'Ready for high-definition face swap',
+                        style: AppTextStyles.caption(color: AppColors.slate),
                       ),
                       SizedBox(height: 8.h),
                       Row(
                         children: [
                           GestureDetector(
                             onTap: () => _showImageSourcePicker(context),
-                            child: Text(
-                              'Change Photo',
-                              style: AppTextStyles.caption(
-                                color: AppColors.primaryAction,
-                                fontWeight: FontWeight.w700,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceInput,
+                                borderRadius: BorderRadius.circular(8.r),
+                                border: Border.all(color: AppColors.borderSubtle, width: 0.8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.cached_rounded, size: 12.r, color: AppColors.bone),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    'Change',
+                                    style: AppTextStyles.caption(
+                                      color: AppColors.bone,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                          SizedBox(width: 16.w),
+                          SizedBox(width: 8.w),
                           GestureDetector(
                             onTap: () {
                               HapticFeedback.lightImpact();
                               widget.onFaceSelected(null);
                             },
-                            child: Text(
-                              'Remove',
-                              style: AppTextStyles.caption(
-                                color: AppColors.statusError,
-                                fontWeight: FontWeight.w600,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                              decoration: BoxDecoration(
+                                color: AppColors.statusError.withAlpha(20),
+                                borderRadius: BorderRadius.circular(8.r),
+                                border: Border.all(color: AppColors.statusError.withAlpha(60), width: 0.8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.delete_outline_rounded, size: 12.r, color: AppColors.statusError),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    'Remove',
+                                    style: AppTextStyles.caption(
+                                      color: AppColors.statusError,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),

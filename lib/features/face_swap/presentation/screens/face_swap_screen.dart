@@ -109,63 +109,16 @@ class _FaceSwapScreenState extends State<FaceSwapScreen> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Banner Header Card
-                    Container(
-                      padding: EdgeInsets.all(14.r),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceCard,
-                        borderRadius: BorderRadius.circular(14.r),
-                        border: Border.all(color: AppColors.borderSubtle, width: 1.r),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.all(8.r),
-                            decoration: BoxDecoration(
-                              color: AppColors.accentGlowSoft,
-                              borderRadius: BorderRadius.circular(10.r),
-                            ),
-                            child: Icon(
-                              Icons.face_retouching_natural_rounded,
-                              color: AppColors.primaryAction,
-                              size: 26.r,
-                            ),
-                          ),
-                          SizedBox(width: 12.w),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'AI Dance & Action Face Swap',
-                                  style: AppTextStyles.labelMedium(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                SizedBox(height: 2.h),
-                                Text(
-                                  'Swap any character face onto dance templates or your custom video.',
-                                  style: AppTextStyles.bodySmall(color: AppColors.textMuted),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    SizedBox(height: 24.h),
-
                     // 1. Dance / Action Template Selector
                     VideoTemplateSelector(
+                      templates: _controller.templates.toList(),
                       selectedTemplate: state.selectedTemplate,
                       customVideoFile: state.customVideoFile,
                       onTemplateSelected: (template) => _controller.selectTemplate(template),
                       onCustomVideoPicked: (file) => _controller.setCustomVideo(file),
                     ),
 
-                    SizedBox(height: 24.h),
+                    SizedBox(height: 18.h),
 
                     // 2. Character Face Photo Picker
                     SourceFacePicker(
@@ -173,7 +126,7 @@ class _FaceSwapScreenState extends State<FaceSwapScreen> {
                       onFaceSelected: (file) => _controller.setSourceFaceImage(file),
                     ),
 
-                    SizedBox(height: 28.h),
+                    SizedBox(height: 20.h),
 
                     // Wallet Warning Banner
                     if (!hasEnoughCredits) ...[

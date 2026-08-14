@@ -3,17 +3,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/services/image_upload_service.dart';
-import '../../../../core/widgets/app_network_image.dart';
+import '../../../../core/utils/logger.dart';
+import '../../../../core/utils/storage_url_resolver.dart';
 import '../../domain/models/video_template.dart';
 import 'template_preview_modal.dart';
 
+/// Pure, clean Dance Template Selector with live looping video preview cards.
+/// Completely free of distracting titles or badges, with prominent 20.r curves.
 class VideoTemplateSelector extends StatelessWidget {
   final VideoTemplate selectedTemplate;
   final File? customVideoFile;
+  final List<VideoTemplate>? templates;
   final ValueChanged<VideoTemplate> onTemplateSelected;
   final ValueChanged<File> onCustomVideoPicked;
 
@@ -21,6 +26,7 @@ class VideoTemplateSelector extends StatelessWidget {
     super.key,
     required this.selectedTemplate,
     this.customVideoFile,
+    this.templates,
     required this.onTemplateSelected,
     required this.onCustomVideoPicked,
   });
@@ -37,10 +43,10 @@ class VideoTemplateSelector extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '⚠️ Notice: Large video selected (${sizeMB.toStringAsFixed(1)} MB). Videos over 50MB may take longer to upload.',
+              '⚠️ Large video selected (${sizeMB.toStringAsFixed(1)} MB). Upload may take longer.',
               style: AppTextStyles.bodyM(color: Colors.white),
             ),
-            backgroundColor: AppColors.creditGoldTitle,
+            backgroundColor: AppColors.statusWarning,
             duration: const Duration(seconds: 4),
           ),
         );
@@ -54,9 +60,9 @@ class VideoTemplateSelector extends StatelessWidget {
     HapticFeedback.lightImpact();
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surfaceCard,
+      backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -65,16 +71,16 @@ class VideoTemplateSelector extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.video_library_outlined, color: AppColors.primaryAction),
-                title: Text('Select Video from Gallery', style: AppTextStyles.bodyM()),
+                leading: const Icon(Icons.video_library_outlined, color: AppColors.ember),
+                title: Text('Select Video from Gallery', style: AppTextStyles.bodyM(color: AppColors.bone)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickCustomVideo(context, ImageSource.gallery);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.videocam_outlined, color: AppColors.primaryAction),
-                title: Text('Record Video with Camera', style: AppTextStyles.bodyM()),
+                leading: const Icon(Icons.videocam_outlined, color: AppColors.ember),
+                title: Text('Record Video with Camera', style: AppTextStyles.bodyM(color: AppColors.bone)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickCustomVideo(context, ImageSource.camera);
@@ -106,7 +112,7 @@ class VideoTemplateSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const templates = VideoTemplate.catalog;
+    final templateList = templates ?? VideoTemplate.catalog;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,32 +121,33 @@ class VideoTemplateSelector extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '1. Select Dance / Action Template',
-              style: AppTextStyles.labelSmall(
-                color: AppColors.textMuted,
-                fontWeight: FontWeight.w600,
+              'Select Video Template',
+              style: AppTextStyles.labelMedium(
+                color: AppColors.bone,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            Text(
-              selectedTemplate.isCustom ? 'Custom Video' : selectedTemplate.title,
-              style: AppTextStyles.caption(
-                color: AppColors.primaryAction,
-                fontWeight: FontWeight.w600,
+            if (selectedTemplate.isCustom)
+              Text(
+                'Custom Video',
+                style: AppTextStyles.caption(
+                  color: AppColors.ember,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
           ],
         ),
         SizedBox(height: 12.h),
 
         SizedBox(
-          height: 165.h,
+          height: 180.h,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: templates.length + 1, // Catalog items + Custom Upload Card
-            separatorBuilder: (_, _) => SizedBox(width: 12.w),
+            itemCount: templateList.length + 1, // Catalog items + Custom Upload Card
+            separatorBuilder: (_, _) => SizedBox(width: 14.w),
             itemBuilder: (context, index) {
               // Custom Video Picker Card
-              if (index == templates.length) {
+              if (index == templateList.length) {
                 final isCustomSelected = selectedTemplate.isCustom;
                 final customFileSizeMB = customVideoFile != null
                     ? (customVideoFile!.lengthSync() / (1024 * 1024)).toStringAsFixed(1)
@@ -149,38 +156,53 @@ class VideoTemplateSelector extends StatelessWidget {
                 return GestureDetector(
                   onTap: () => _showCustomVideoSourcePicker(context),
                   child: Container(
-                    width: 120.w,
+                    width: 126.w,
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceCard,
-                      borderRadius: BorderRadius.circular(14.r),
+                      color: const Color(0xFF161922),
+                      borderRadius: BorderRadius.circular(20.r),
                       border: Border.all(
                         color: isCustomSelected
-                            ? AppColors.primaryAction
-                            : AppColors.borderSubtle,
-                        width: isCustomSelected ? 2.r : 1.r,
+                            ? AppColors.ember
+                            : const Color(0xFF2C3240),
+                        width: isCustomSelected ? 2.5.r : 1.5.r,
                       ),
+                      boxShadow: [
+                        if (isCustomSelected)
+                          BoxShadow(
+                            color: AppColors.ember.withAlpha(80),
+                            blurRadius: 14,
+                            spreadRadius: 1,
+                          )
+                        else
+                          BoxShadow(
+                            color: Colors.black.withAlpha(50),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                      ],
                     ),
+                    clipBehavior: Clip.antiAliasWithSaveLayer,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         CircleAvatar(
                           radius: 22.r,
                           backgroundColor: isCustomSelected
-                              ? AppColors.accentGlowSoft
+                              ? AppColors.emberSoft
                               : AppColors.surfaceInput,
                           child: Icon(
                             isCustomSelected ? Icons.check_circle_rounded : Icons.upload_file_rounded,
-                            color: isCustomSelected ? AppColors.primaryAction : AppColors.textMuted,
+                            color: isCustomSelected ? AppColors.ember : AppColors.slate,
                             size: 24.r,
                           ),
                         ),
                         SizedBox(height: 8.h),
                         Text(
-                          isCustomSelected ? 'Custom MP4' : 'Upload',
+                          isCustomSelected ? 'Custom MP4' : 'Custom Video',
                           style: AppTextStyles.labelSmall(
                             color: isCustomSelected
-                                ? AppColors.primaryAction
-                                : AppColors.textPrimary,
+                                ? AppColors.ember
+                                : AppColors.bone,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -188,29 +210,30 @@ class VideoTemplateSelector extends StatelessWidget {
                         Text(
                           isCustomSelected && customFileSizeMB != null
                               ? '$customFileSizeMB MB Ready'
-                              : 'Your Video',
+                              : 'Upload',
                           style: AppTextStyles.caption(
-                            color: isCustomSelected ? AppColors.statusSuccess : AppColors.textMuted,
+                            color: isCustomSelected ? AppColors.statusSuccess : AppColors.slate,
                           ),
                         ),
                         if (isCustomSelected && customVideoFile != null) ...[
-                          SizedBox(height: 6.h),
+                          SizedBox(height: 8.h),
                           GestureDetector(
                             onTap: () => _previewCustomVideo(context),
                             child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryAction.withAlpha(40),
-                                borderRadius: BorderRadius.circular(6.r),
+                                color: AppColors.ember.withAlpha(40),
+                                borderRadius: BorderRadius.circular(8.r),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.play_arrow_rounded, size: 12.r, color: AppColors.primaryAction),
+                                  Icon(Icons.play_arrow_rounded, size: 14.r, color: AppColors.ember),
+                                  SizedBox(width: 2.w),
                                   Text(
                                     'Preview',
                                     style: AppTextStyles.caption(
-                                      color: AppColors.primaryAction,
+                                      color: AppColors.ember,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -225,173 +248,222 @@ class VideoTemplateSelector extends StatelessWidget {
                 );
               }
 
-              // Preset Template Card
-              final item = templates[index];
+              // Preset Template Card with live looping video preview
+              final item = templateList[index];
               final isSelected = selectedTemplate.id == item.id && !selectedTemplate.isCustom;
 
-              return GestureDetector(
+              return _TemplateVideoThumbnailCard(
+                template: item,
+                isSelected: isSelected,
                 onTap: () {
                   HapticFeedback.selectionClick();
                   onTemplateSelected(item);
                 },
-                child: Container(
-                  width: 120.w,
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceCard,
-                    borderRadius: BorderRadius.circular(14.r),
-                    border: Border.all(
-                      color: isSelected
-                          ? AppColors.primaryAction
-                          : AppColors.borderSubtle,
-                      width: isSelected ? 2.r : 1.r,
-                    ),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      // Thumbnail Image
-                      AppNetworkImage(
-                        imageUrl: item.thumbnailUrl,
-                        fit: BoxFit.cover,
-                      ),
-
-                      // Gradient Overlay for Text Readability
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black.withAlpha(60),
-                              Colors.transparent,
-                              Colors.black.withAlpha(220),
-                            ],
-                            stops: const [0.0, 0.35, 1.0],
-                          ),
-                        ),
-                      ),
-
-                      // Top Badge
-                      if (item.badge != null)
-                        Positioned(
-                          top: 8.r,
-                          left: 8.r,
-                          child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withAlpha(180),
-                              borderRadius: BorderRadius.circular(6.r),
-                              border: Border.all(color: Colors.white.withAlpha(40), width: 0.5),
-                            ),
-                            child: Text(
-                              item.badge!,
-                              style: AppTextStyles.caption(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                      // Selected Checkmark Badge
-                      if (isSelected)
-                        Positioned(
-                          top: 8.r,
-                          right: 8.r,
-                          child: CircleAvatar(
-                            radius: 10.r,
-                            backgroundColor: AppColors.primaryAction,
-                            child: Icon(Icons.check, size: 12.r, color: Colors.white),
-                          ),
-                        ),
-
-                      // Center Play Preview Button Overlay
-                      Center(
-                        child: GestureDetector(
-                          onTap: () => _previewTemplate(context, item),
-                          child: Container(
-                            padding: EdgeInsets.all(8.r),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withAlpha(160),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white.withAlpha(60), width: 1.r),
-                            ),
-                            child: Icon(
-                              Icons.play_arrow_rounded,
-                              color: Colors.white,
-                              size: 22.r,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Bottom Info Box
-                      Positioned(
-                        bottom: 8.r,
-                        left: 8.r,
-                        right: 8.r,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              item.title,
-                              style: AppTextStyles.labelSmall(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 2.h),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  item.category,
-                                  style: AppTextStyles.caption(
-                                    color: Colors.white70,
-                                  ),
-                                ),
-                                Text(
-                                  '${item.durationSeconds}s',
-                                  style: AppTextStyles.caption(
-                                    color: AppColors.creditGoldIcon,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                onPreview: () => _previewTemplate(context, item),
               );
             },
           ),
         ),
+      ],
+    );
+  }
+}
 
-        SizedBox(height: 8.h),
+/// A purely visual video card with strictly clipped 20.r curves, glowing borders, and zero text clutter.
+class _TemplateVideoThumbnailCard extends StatefulWidget {
+  final VideoTemplate template;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final VoidCallback onPreview;
 
-        // Helper Guidance Tip
-        Row(
-          children: [
-            Icon(Icons.lightbulb_outline_rounded, size: 14.r, color: AppColors.creditGoldIcon),
-            SizedBox(width: 6.w),
-            Expanded(
-              child: Text(
-                'Tip: 5–15 second clips with clear, front-facing faces produce the best results.',
-                style: AppTextStyles.caption(
-                  color: AppColors.textMuted,
-                ),
+  const _TemplateVideoThumbnailCard({
+    required this.template,
+    required this.isSelected,
+    required this.onTap,
+    required this.onPreview,
+  });
+
+  @override
+  State<_TemplateVideoThumbnailCard> createState() => _TemplateVideoThumbnailCardState();
+}
+
+class _TemplateVideoThumbnailCardState extends State<_TemplateVideoThumbnailCard> {
+  VideoPlayerController? _playerController;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initVideoThumbnail();
+  }
+
+  Future<void> _initVideoThumbnail() async {
+    try {
+      final rawUrl = widget.template.videoUrl;
+      if (rawUrl.isEmpty) return;
+
+      final resolvedUrl = await StorageUrlResolver.resolveUrl(rawUrl);
+      final target = resolvedUrl.isNotEmpty ? resolvedUrl : rawUrl;
+
+      final controller = VideoPlayerController.networkUrl(
+        Uri.parse(target),
+        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+      );
+
+      await controller.initialize();
+      await controller.setVolume(0.0);
+      await controller.setLooping(true);
+      await controller.play();
+
+      if (mounted) {
+        setState(() {
+          _playerController = controller;
+          _isInitialized = true;
+        });
+      }
+    } catch (e) {
+      Logger.w('Template thumbnail preview init failed for ${widget.template.id}: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _playerController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = widget.isSelected;
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 126.w,
+        decoration: BoxDecoration(
+          color: const Color(0xFF161922),
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.ember
+                : const Color(0xFF2C3240),
+            width: isSelected ? 2.5.r : 1.5.r,
+          ),
+          boxShadow: [
+            if (isSelected)
+              BoxShadow(
+                color: AppColors.ember.withAlpha(90),
+                blurRadius: 14,
+                spreadRadius: 1.5,
+              )
+            else
+              BoxShadow(
+                color: Colors.black.withAlpha(50),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
-            ),
           ],
         ),
-      ],
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18.r),
+          clipBehavior: Clip.antiAliasWithSaveLayer,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // 1. Live Video Frame Player or Clean Loader Fallback
+              if (_isInitialized && _playerController != null)
+                SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _playerController!.value.size.width > 0
+                          ? _playerController!.value.size.width
+                          : 720,
+                      height: _playerController!.value.size.height > 0
+                          ? _playerController!.value.size.height
+                          : 1280,
+                      child: VideoPlayer(_playerController!),
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF1E222D),
+                        Color(0xFF13151D),
+                      ],
+                    ),
+                  ),
+                  child: Center(
+                    child: SizedBox(
+                      width: 24.r,
+                      height: 24.r,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: AppColors.ember,
+                      ),
+                    ),
+                  ),
+                ),
+
+              // 2. Subtle Vignette Gradient for Depth (only when initialized)
+              if (_isInitialized)
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withAlpha(50),
+                        Colors.transparent,
+                        Colors.black.withAlpha(120),
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
+                    ),
+                  ),
+                ),
+
+              // 3. Top-Right Selected Checkmark Badge
+              if (isSelected)
+                Positioned(
+                  top: 8.r,
+                  right: 8.r,
+                  child: CircleAvatar(
+                    radius: 12.r,
+                    backgroundColor: AppColors.ember,
+                    child: Icon(Icons.check_rounded, size: 14.r, color: Colors.white),
+                  ),
+                ),
+
+              // 4. Center Tap-to-Preview Play Button (when video is ready)
+              if (_isInitialized)
+                Center(
+                  child: GestureDetector(
+                    onTap: widget.onPreview,
+                    child: Container(
+                      padding: EdgeInsets.all(9.r),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withAlpha(150),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white.withAlpha(80), width: 1.r),
+                      ),
+                      child: Icon(
+                        Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 22.r,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
