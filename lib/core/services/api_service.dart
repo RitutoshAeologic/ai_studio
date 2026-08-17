@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/foundation.dart';
@@ -93,7 +94,10 @@ class ApiService {
           baseUrl: _liveBaseUrl,
           connectTimeout: const Duration(seconds: 15),
           receiveTimeout: const Duration(seconds: 30),
-          headers: {'Content-Type': 'application/json'},
+          headers: {
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': '69420',
+          },
         )) {
     _dio.interceptors.add(LogInterceptor(
       requestBody: kDebugMode,
@@ -139,7 +143,21 @@ class ApiService {
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
-      final data = response.data as Map<String, dynamic>?;
+      final dynamic rawData = response.data;
+      Map<String, dynamic>? data;
+      if (rawData is Map<String, dynamic>) {
+        data = rawData;
+      } else if (rawData is String && rawData.trim().isNotEmpty) {
+        try {
+          final decoded = jsonDecode(rawData);
+          data = decoded is Map<String, dynamic> ? decoded : null;
+        } catch (_) {
+          data = null;
+        }
+      } else {
+        data = null;
+      }
+
       if (data == null || data['jobId'] == null) {
         return const Error(
             NetworkFailure('Invalid server response: missing jobId'));
@@ -150,14 +168,51 @@ class ApiService {
       return Success(jobResp);
     } on DioException catch (e, st) {
       Logger.e('API error on generateJob', e, st);
-      final msg = e.response?.data?['message'] as String?;
       if (e.response?.statusCode == 402) {
         return const Error(InsufficientCreditsFailure());
       }
-      return Error(NetworkFailure(msg ?? AppStrings.networkError));
+
+      String? msg;
+      final resData = e.response?.data;
+      if (resData is Map) {
+        msg = (resData['message'] ?? resData['detail'] ?? resData['error'])?.toString();
+      } else if (resData is String && resData.trim().isNotEmpty) {
+        try {
+          final decoded = jsonDecode(resData);
+          if (decoded is Map) {
+            msg = (decoded['message'] ?? decoded['detail'] ?? decoded['error'])?.toString();
+          } else {
+            msg = resData.trim();
+          }
+        } catch (_) {
+          if (resData.contains('ERR_NGROK') || resData.contains('offline')) {
+            msg = 'AI server endpoint is currently offline or unreachable. Please verify server status.';
+          } else {
+            msg = resData.trim();
+          }
+        }
+      }
+
+      if (msg == null || msg.isEmpty) {
+        if (e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.sendTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.connectionError) {
+          msg = 'Unable to connect to AI server. Please check your internet connection.';
+        } else if (e.response?.statusCode == 404) {
+          msg = 'AI server is currently offline or endpoint not found (404).';
+        } else if (e.response?.statusCode == 500) {
+          msg = 'AI server encountered an error processing your request.';
+        } else {
+          msg = e.message ?? AppStrings.networkError;
+        }
+      }
+
+      return Error(NetworkFailure(msg));
     } catch (e, st) {
       Logger.e('Unexpected error on generateJob', e, st);
       return const Error(UnknownFailure());
     }
   }
 }
+

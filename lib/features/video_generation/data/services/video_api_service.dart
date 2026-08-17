@@ -24,7 +24,10 @@ class VideoApiService {
               baseUrl: ApiService.baseUrl,
               connectTimeout: const Duration(seconds: 20),
               receiveTimeout: const Duration(seconds: 60),
-              headers: {'Content-Type': 'application/json'},
+              headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': '69420',
+              },
             )) {
     _dio.interceptors.add(LogInterceptor(
       requestBody: kDebugMode,
@@ -95,7 +98,27 @@ class VideoApiService {
       return GenerateVideoJobResponse.fromJson(data);
     } on DioException catch (e) {
       Logger.e('Error calling video job endpoint', e);
-      dynamic detailData = e.response?.data?['detail'] ?? e.response?.data?['message'];
+      dynamic detailData;
+      final resData = e.response?.data;
+      if (resData is Map) {
+        detailData = resData['detail'] ?? resData['message'] ?? resData['error'];
+      } else if (resData is String && resData.trim().isNotEmpty) {
+        try {
+          final decoded = jsonDecode(resData);
+          if (decoded is Map) {
+            detailData = decoded['detail'] ?? decoded['message'] ?? decoded['error'];
+          } else {
+            detailData = resData;
+          }
+        } catch (_) {
+          if (resData.contains('ERR_NGROK') || resData.contains('offline')) {
+            detailData = 'AI video server is currently offline or unreachable.';
+          } else {
+            detailData = resData;
+          }
+        }
+      }
+
       String? errorMessage;
       if (detailData is List && detailData.isNotEmpty) {
         final firstItem = detailData.first;
@@ -112,6 +135,7 @@ class VideoApiService {
       throw Exception(errorMessage ?? 'Failed to submit video generation job');
     } catch (e) {
       Logger.e('Unexpected error submitting video job', e);
+
       throw Exception(e.toString());
     }
   }

@@ -82,7 +82,7 @@ class FaceSwapProgressOverlay extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Est. processing: 20 - 45 seconds',
+                      'Est. processing: 120 - 180 seconds',
                       style: AppTextStyles.caption(color: AppColors.textMuted),
                     ),
                     Text(

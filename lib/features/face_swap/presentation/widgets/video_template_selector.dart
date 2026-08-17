@@ -17,6 +17,7 @@ class VideoTemplateSelector extends StatelessWidget {
   final VideoTemplate selectedTemplate;
   final File? customVideoFile;
   final List<VideoTemplate>? templates;
+  final bool isProcessing;
   final ValueChanged<VideoTemplate> onTemplateSelected;
   final ValueChanged<File> onCustomVideoPicked;
 
@@ -25,6 +26,7 @@ class VideoTemplateSelector extends StatelessWidget {
     required this.selectedTemplate,
     this.customVideoFile,
     this.templates,
+    this.isProcessing = false,
     required this.onTemplateSelected,
     required this.onCustomVideoPicked,
   });
@@ -112,157 +114,168 @@ class VideoTemplateSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final templateList = templates ?? VideoTemplate.catalog;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return IgnorePointer(
+      ignoring: isProcessing,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 180),
+        opacity: isProcessing ? 0.6 : 1.0,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Select Video Template',
-              style: AppTextStyles.labelMedium(
-                color: AppColors.bone,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            if (selectedTemplate.isCustom)
-              Text(
-                'Custom Video',
-                style: AppTextStyles.caption(
-                  color: AppColors.ember,
-                  fontWeight: FontWeight.w600,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Select Video Template',
+                  style: AppTextStyles.labelMedium(
+                    color: AppColors.bone,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-          ],
-        ),
-        SizedBox(height: 12.h),
-
-        SizedBox(
-          height: 180.h,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: templateList.length + 1, // Catalog items + Custom Upload Card
-            separatorBuilder: (_, _) => SizedBox(width: 14.w),
-            itemBuilder: (context, index) {
-              // Custom Video Picker Card
-              if (index == templateList.length) {
-                final isCustomSelected = selectedTemplate.isCustom;
-                final customFileSizeMB = customVideoFile != null
-                    ? (customVideoFile!.lengthSync() / (1024 * 1024)).toStringAsFixed(1)
-                    : null;
-
-                return GestureDetector(
-                  onTap: () => _showCustomVideoSourcePicker(context),
-                  child: Container(
-                    width: 126.w,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF161922),
-                      borderRadius: BorderRadius.circular(20.r),
-                      border: Border.all(
-                        color: isCustomSelected
-                            ? AppColors.ember
-                            : const Color(0xFF2C3240),
-                        width: isCustomSelected ? 2.5.r : 1.5.r,
-                      ),
-                      boxShadow: [
-                        if (isCustomSelected)
-                          BoxShadow(
-                            color: AppColors.ember.withAlpha(80),
-                            blurRadius: 14,
-                            spreadRadius: 1,
-                          )
-                        else
-                          BoxShadow(
-                            color: Colors.black.withAlpha(50),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                      ],
-                    ),
-                    clipBehavior: Clip.antiAliasWithSaveLayer,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircleAvatar(
-                          radius: 22.r,
-                          backgroundColor: isCustomSelected
-                              ? AppColors.emberSoft
-                              : AppColors.surfaceInput,
-                          child: Icon(
-                            isCustomSelected ? Icons.check_circle_rounded : Icons.upload_file_rounded,
-                            color: isCustomSelected ? AppColors.ember : AppColors.slate,
-                            size: 24.r,
-                          ),
-                        ),
-                        SizedBox(height: 8.h),
-                        Text(
-                          isCustomSelected ? 'Custom MP4' : 'Custom Video',
-                          style: AppTextStyles.labelSmall(
-                            color: isCustomSelected
-                                ? AppColors.ember
-                                : AppColors.bone,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        SizedBox(height: 2.h),
-                        Text(
-                          isCustomSelected && customFileSizeMB != null
-                              ? '$customFileSizeMB MB Ready'
-                              : 'Upload',
-                          style: AppTextStyles.caption(
-                            color: isCustomSelected ? AppColors.statusSuccess : AppColors.slate,
-                          ),
-                        ),
-                        if (isCustomSelected && customVideoFile != null) ...[
-                          SizedBox(height: 8.h),
-                          GestureDetector(
-                            onTap: () => _previewCustomVideo(context),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                              decoration: BoxDecoration(
-                                color: AppColors.ember.withAlpha(40),
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.play_arrow_rounded, size: 14.r, color: AppColors.ember),
-                                  SizedBox(width: 2.w),
-                                  Text(
-                                    'Preview',
-                                    style: AppTextStyles.caption(
-                                      color: AppColors.ember,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
+                if (selectedTemplate.isCustom)
+                  Text(
+                    'Custom Video',
+                    style: AppTextStyles.caption(
+                      color: AppColors.ember,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                );
-              }
+              ],
+            ),
+            SizedBox(height: 12.h),
 
-              // Preset Template Card with live looping video preview
-              final item = templateList[index];
-              final isSelected = selectedTemplate.id == item.id && !selectedTemplate.isCustom;
+            SizedBox(
+              height: 180.h,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: templateList.length + 1, // Catalog items + Custom Upload Card
+                separatorBuilder: (_, _) => SizedBox(width: 14.w),
+                itemBuilder: (context, index) {
+                  // Custom Video Picker Card
+                  if (index == templateList.length) {
+                    final isCustomSelected = selectedTemplate.isCustom;
+                    final customFileSizeMB = customVideoFile != null
+                        ? (customVideoFile!.lengthSync() / (1024 * 1024)).toStringAsFixed(1)
+                        : null;
 
-              return _TemplateVideoThumbnailCard(
-                template: item,
-                isSelected: isSelected,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  onTemplateSelected(item);
+                    return GestureDetector(
+                      onTap: isProcessing ? null : () => _showCustomVideoSourcePicker(context),
+                      child: Container(
+                        width: 126.w,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF161922),
+                          borderRadius: BorderRadius.circular(20.r),
+                          border: Border.all(
+                            color: isCustomSelected
+                                ? AppColors.ember
+                                : const Color(0xFF2C3240),
+                            width: isCustomSelected ? 2.5.r : 1.5.r,
+                          ),
+                          boxShadow: [
+                            if (isCustomSelected)
+                              BoxShadow(
+                                color: AppColors.ember.withAlpha(80),
+                                blurRadius: 14,
+                                spreadRadius: 1,
+                              )
+                            else
+                              BoxShadow(
+                                color: Colors.black.withAlpha(50),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                          ],
+                        ),
+                        clipBehavior: Clip.antiAliasWithSaveLayer,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircleAvatar(
+                              radius: 22.r,
+                              backgroundColor: isCustomSelected
+                                  ? AppColors.emberSoft
+                                  : AppColors.surfaceInput,
+                              child: Icon(
+                                isCustomSelected ? Icons.check_circle_rounded : Icons.upload_file_rounded,
+                                color: isCustomSelected ? AppColors.ember : AppColors.slate,
+                                size: 24.r,
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(
+                              isCustomSelected ? 'Custom MP4' : 'Custom Video',
+                              style: AppTextStyles.labelSmall(
+                                color: isCustomSelected
+                                    ? AppColors.ember
+                                    : AppColors.bone,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              isCustomSelected && customFileSizeMB != null
+                                  ? '$customFileSizeMB MB Ready'
+                                  : 'Upload',
+                              style: AppTextStyles.caption(
+                                color: isCustomSelected ? AppColors.statusSuccess : AppColors.slate,
+                              ),
+                            ),
+                            if (isCustomSelected && customVideoFile != null) ...[
+                              SizedBox(height: 8.h),
+                              GestureDetector(
+                                onTap: isProcessing ? null : () => _previewCustomVideo(context),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.ember.withAlpha(40),
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.play_arrow_rounded, size: 14.r, color: AppColors.ember),
+                                      SizedBox(width: 2.w),
+                                      Text(
+                                        'Preview',
+                                        style: AppTextStyles.caption(
+                                          color: AppColors.ember,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  // Preset Template Card with live looping video preview
+                  final item = templateList[index];
+                  final isSelected = selectedTemplate.id == item.id && !selectedTemplate.isCustom;
+
+                  return _TemplateVideoThumbnailCard(
+                    template: item,
+                    isSelected: isSelected,
+                    onTap: () {
+                      if (isProcessing) return;
+                      HapticFeedback.selectionClick();
+                      onTemplateSelected(item);
+                    },
+                    onPreview: () {
+                      if (isProcessing) return;
+                      _previewTemplate(context, item);
+                    },
+                  );
                 },
-                onPreview: () => _previewTemplate(context, item),
-              );
-            },
-          ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

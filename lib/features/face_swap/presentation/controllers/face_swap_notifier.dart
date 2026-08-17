@@ -333,6 +333,13 @@ class FaceSwapController extends GetxController {
     }
     final clean = raw.replaceAll('Exception: ', '').replaceAll('DioException [bad response]: ', '').trim();
     final lower = clean.toLowerCase();
+    if (lower.contains('ngrok') ||
+        lower.contains('offline') ||
+        lower.contains('unreachable') ||
+        lower.contains('connection refused') ||
+        lower.contains('connection error')) {
+      return 'AI face swap server is currently offline or unreachable. Please check backend server and try again.';
+    }
     if (lower.contains('no face') ||
         lower.contains('face not detected') ||
         lower.contains('insightface') ||
@@ -370,7 +377,7 @@ class FaceSwapController extends GetxController {
     _estimatedProgressTimer?.cancel();
     _pollingTimer?.cancel();
 
-    // Start estimated smooth progress simulation (25-45s)
+    // Smooth progress simulation for active UI feedback
     int elapsed = 0;
     _estimatedProgressTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       elapsed++;
@@ -379,7 +386,7 @@ class FaceSwapController extends GetxController {
         return;
       }
 
-      final estProgress = (0.40 + (elapsed / 35) * 0.55).clamp(0.40, 0.95);
+      final estProgress = (0.40 + (elapsed / 45) * 0.55).clamp(0.40, 0.95);
       state.value = state.value.copyWith(progressPercent: estProgress);
     });
 
@@ -421,7 +428,7 @@ class FaceSwapController extends GetxController {
           errorMsg: statusResp.error,
         );
       } catch (e) {
-        Logger.w('Face swap REST polling error: $e');
+        Logger.w('Face swap REST polling update: $e');
       }
     });
   }
@@ -462,22 +469,24 @@ class FaceSwapController extends GetxController {
         activeStageMessage: 'Finalizing video player...',
       );
 
-      StorageUrlResolver.resolveUrl(rawUrl).then((resolved) {
-        final finalUrl = resolved.isNotEmpty ? resolved : rawUrl;
-        state.value = state.value.copyWith(
-          status: FaceSwapStatus.completed,
-          progressPercent: 1.0,
-          videoUrl: finalUrl,
-          activeStageMessage: 'Face swap video completed!',
-        );
-      }).catchError((_) {
-        state.value = state.value.copyWith(
-          status: FaceSwapStatus.completed,
-          progressPercent: 1.0,
-          videoUrl: rawUrl,
-          activeStageMessage: 'Face swap video completed!',
-        );
-      });
+      unawaited(
+        StorageUrlResolver.resolveUrl(rawUrl).then((resolved) {
+          final finalUrl = resolved.isNotEmpty ? resolved : rawUrl;
+          state.value = state.value.copyWith(
+            status: FaceSwapStatus.completed,
+            progressPercent: 1.0,
+            videoUrl: finalUrl,
+            activeStageMessage: 'Face swap video completed!',
+          );
+        }).catchError((_) {
+          state.value = state.value.copyWith(
+            status: FaceSwapStatus.completed,
+            progressPercent: 1.0,
+            videoUrl: rawUrl,
+            activeStageMessage: 'Face swap video completed!',
+          );
+        }),
+      );
     } else if (statusStr == 'error' || statusStr == 'failed') {
       _jobSubscription?.cancel();
       _estimatedProgressTimer?.cancel();

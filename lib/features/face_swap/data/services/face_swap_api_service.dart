@@ -24,7 +24,10 @@ class FaceSwapApiService {
               baseUrl: ApiService.baseUrl,
               connectTimeout: const Duration(seconds: 20),
               receiveTimeout: const Duration(seconds: 60),
-              headers: {'Content-Type': 'application/json'},
+              headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': '69420',
+              },
             )) {
     _dio.interceptors.add(LogInterceptor(
       request: false,

@@ -16,6 +16,7 @@ import '../../gallery/widgets/image_result_modal.dart';
 import '../../jobs/controllers/job_controller.dart';
 import '../../jobs/widgets/job_status_chip.dart';
 import '../../mesh/views/mesh_viewer_view.dart';
+import '../../video_generation/presentation/widgets/video_player_widget.dart';
 
 
 /// Gallery view tab displaying live history of generated assets with delete & auto-cleanup support.
@@ -296,11 +297,28 @@ class GalleryTabView extends StatelessWidget {
                   ? job.outputUrl
                   : null;
 
+          final isVideo = job.type == JobType.videoGen ||
+              job.type == JobType.videoFaceSwap ||
+              (job.outputUrl != null &&
+                  (job.outputUrl!.toLowerCase().contains('.mp4') ||
+                      job.outputUrl!.toLowerCase().contains('.mov') ||
+                      job.outputUrl!.toLowerCase().contains('.webm')));
+
           if (job.type == JobType.meshGen || glbUrl != null) {
             final targetUrl = glbUrl ?? job.outputUrl;
             if (targetUrl != null && targetUrl.isNotEmpty) {
               MeshViewerModal.show(context, meshUrl: targetUrl);
             }
+          } else if (isVideo && job.outputUrl != null && job.outputUrl!.isNotEmpty) {
+            VideoPlayerModal.show(
+              context,
+              videoUrl: job.outputUrl!,
+              title: job.params.userPrompt ??
+                  (job.type == JobType.videoFaceSwap
+                      ? 'AI Face Swap Video'
+                      : 'AI Video Result'),
+              job: job,
+            );
           } else if (job.outputUrl != null && job.outputUrl!.isNotEmpty) {
             ImageResultModal.show(context, imageUrl: job.outputUrl!, job: job);
           }

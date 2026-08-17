@@ -28,6 +28,7 @@ class _FaceSwapScreenState extends State<FaceSwapScreen> {
   // Prevents VideoPlayerModal from being shown multiple times during
   // rapid Obx rebuilds while status == FaceSwapStatus.completed.
   bool _videoShown = false;
+  bool _isLocallySubmitting = false;
 
   @override
   void initState() {
@@ -39,9 +40,33 @@ class _FaceSwapScreenState extends State<FaceSwapScreen> {
     }
   }
 
-  void _submitJob() {
-    HapticFeedback.mediumImpact();
-    _controller.submitFaceSwap();
+  Future<void> _submitJob() async {
+    await HapticFeedback.mediumImpact();
+    setState(() => _isLocallySubmitting = true);
+    try {
+      await _controller.submitFaceSwap();
+      final currentState = _controller.state.value;
+      if (currentState.status == FaceSwapStatus.error &&
+          currentState.errorMessage != null &&
+          currentState.errorMessage!.isNotEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                currentState.errorMessage!,
+                style: AppTextStyles.bodyMedium(color: Colors.white),
+              ),
+              backgroundColor: AppColors.statusError,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLocallySubmitting = false);
+      }
+    }
   }
 
   @override
@@ -93,187 +118,201 @@ class _FaceSwapScreenState extends State<FaceSwapScreen> {
       body: UnfocusOnTap(
         child: Stack(
           children: [
-            SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-              child: Obx(() {
-                final state = _controller.state.value;
-                final walletBalance = walletCtrl.wallet.value?.balance ?? 0;
-                final hasEnoughCredits = walletBalance >= state.requiredCredits;
-                final isProcessing = state.status == FaceSwapStatus.submitting ||
-                    state.status == FaceSwapStatus.uploadingAssets ||
-                    state.status == FaceSwapStatus.checkingCredits ||
-                    state.status == FaceSwapStatus.processing;
+            Obx(() {
+              final state = _controller.state.value;
+              final walletBalance = walletCtrl.wallet.value?.balance ?? 0;
+              final hasEnoughCredits = walletBalance >= state.requiredCredits;
+              final isProcessing = (_isLocallySubmitting && state.status != FaceSwapStatus.error) ||
+                  state.status == FaceSwapStatus.submitting ||
+                  state.status == FaceSwapStatus.uploadingAssets ||
+                  state.status == FaceSwapStatus.checkingCredits ||
+                  state.status == FaceSwapStatus.processing;
 
-                final canSubmit = hasEnoughCredits &&
-                    !isProcessing &&
-                    state.sourceFaceFile != null &&
-                    (!state.selectedTemplate.isCustom || state.customVideoFile != null);
+              final canSubmit = hasEnoughCredits &&
+                  !isProcessing &&
+                  state.sourceFaceFile != null &&
+                  (!state.selectedTemplate.isCustom || state.customVideoFile != null);
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 1. Dance / Action Template Selector
-                    VideoTemplateSelector(
-                      templates: _controller.templates.toList(),
-                      selectedTemplate: state.selectedTemplate,
-                      customVideoFile: state.customVideoFile,
-                      onTemplateSelected: (template) => _controller.selectTemplate(template),
-                      onCustomVideoPicked: (file) => _controller.setCustomVideo(file),
-                    ),
-
-                    SizedBox(height: 18.h),
-
-                    // 2. Character Face Photo Picker
-                    SourceFacePicker(
-                      selectedFaceFile: state.sourceFaceFile,
-                      onFaceSelected: (file) => _controller.setSourceFaceImage(file),
-                    ),
-
-                    SizedBox(height: 20.h),
-
-                    // Wallet Warning Banner
-                    if (!hasEnoughCredits) ...[
-                      Container(
-                        padding: EdgeInsets.all(12.r),
-                        margin: EdgeInsets.only(bottom: 14.h),
-                        decoration: BoxDecoration(
-                          color: AppColors.creditGoldBg,
-                          borderRadius: BorderRadius.circular(10.r),
-                          border: Border.all(color: AppColors.creditGoldIcon, width: 1.r),
+              return IgnorePointer(
+                ignoring: isProcessing,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 180),
+                  opacity: isProcessing ? 0.6 : 1.0,
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 1. Dance / Action Template Selector
+                        VideoTemplateSelector(
+                          templates: _controller.templates.toList(),
+                          selectedTemplate: state.selectedTemplate,
+                          customVideoFile: state.customVideoFile,
+                          isProcessing: isProcessing,
+                          onTemplateSelected: (template) => _controller.selectTemplate(template),
+                          onCustomVideoPicked: (file) => _controller.setCustomVideo(file),
                         ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.warning_amber_rounded, color: AppColors.creditGoldIcon, size: 20.r),
-                            SizedBox(width: 8.w),
-                            Expanded(
-                              child: Text(
-                                'Insufficient wallet balance ($walletBalance credits available). Face Swap requires ${state.requiredCredits} credits.',
-                                style: AppTextStyles.bodySmall(color: AppColors.creditGoldTitle),
-                              ),
+
+                        SizedBox(height: 18.h),
+
+                        // 2. Character Face Photo Picker
+                        SourceFacePicker(
+                          selectedFaceFile: state.sourceFaceFile,
+                          isProcessing: isProcessing,
+                          onFaceSelected: (file) => _controller.setSourceFaceImage(file),
+                        ),
+
+                        SizedBox(height: 20.h),
+
+                        // Wallet Warning Banner
+                        if (!hasEnoughCredits) ...[
+                          Container(
+                            padding: EdgeInsets.all(12.r),
+                            margin: EdgeInsets.only(bottom: 14.h),
+                            decoration: BoxDecoration(
+                              color: AppColors.creditGoldBg,
+                              borderRadius: BorderRadius.circular(10.r),
+                              border: Border.all(color: AppColors.creditGoldIcon, width: 1.r),
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
-
-                    // Error Notice Banner (Inline)
-                    if (state.status == FaceSwapStatus.error &&
-                        state.errorMessage != null &&
-                        state.errorMessage!.isNotEmpty) ...[
-                      Container(
-                        padding: EdgeInsets.all(16.r),
-                        margin: EdgeInsets.only(bottom: 16.h),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF221115),
-                          borderRadius: BorderRadius.circular(14.r),
-                          border: Border.all(color: AppColors.statusError.withAlpha(160), width: 1.r),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                            child: Row(
                               children: [
-                                Icon(Icons.error_outline_rounded, color: AppColors.statusError, size: 20.r),
+                                Icon(Icons.warning_amber_rounded, color: AppColors.creditGoldIcon, size: 20.r),
                                 SizedBox(width: 8.w),
                                 Expanded(
                                   child: Text(
-                                    'Face Swap Notice',
-                                    style: AppTextStyles.headingSmall(
-                                      color: AppColors.statusError,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                                    'Insufficient wallet balance ($walletBalance credits available). Face Swap requires ${state.requiredCredits} credits.',
+                                    style: AppTextStyles.bodySmall(color: AppColors.creditGoldTitle),
                                   ),
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.close_rounded, color: AppColors.slate, size: 18.r),
-                                  visualDensity: VisualDensity.compact,
-                                  onPressed: () => _controller.resetState(),
                                 ),
                               ],
                             ),
-                            SizedBox(height: 6.h),
-                            Text(
-                              state.errorMessage!,
-                              style: AppTextStyles.bodySmall(color: AppColors.bone),
+                          ),
+                        ],
+
+                        // Error Notice Banner (Inline)
+                        if (state.status == FaceSwapStatus.error &&
+                            state.errorMessage != null &&
+                            state.errorMessage!.isNotEmpty) ...[
+                          Container(
+                            padding: EdgeInsets.all(16.r),
+                            margin: EdgeInsets.only(bottom: 16.h),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF221115),
+                              borderRadius: BorderRadius.circular(14.r),
+                              border: Border.all(color: AppColors.statusError.withAlpha(160), width: 1.r),
                             ),
-                            SizedBox(height: 12.h),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                if (state.errorMessage!.toLowerCase().contains('credit') ||
-                                    state.errorMessage!.toLowerCase().contains('balance')) ...[
-                                  TextButton(
-                                    onPressed: () {
-                                      _controller.resetState();
-                                      Get.toNamed(AppRoutes.homeShell);
-                                    },
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: AppColors.statusWarning,
+                                Row(
+                                  children: [
+                                    Icon(Icons.error_outline_rounded, color: AppColors.statusError, size: 20.r),
+                                    SizedBox(width: 8.w),
+                                    Expanded(
+                                      child: Text(
+                                        'Face Swap Notice',
+                                        style: AppTextStyles.headingSmall(
+                                          color: AppColors.statusError,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
                                     ),
-                                    child: const Text('Top Up Balance'),
-                                  ),
-                                  SizedBox(width: 8.w),
-                                ],
-                                ElevatedButton(
-                                  onPressed: () {
-                                    HapticFeedback.lightImpact();
-                                    _controller.resetState();
-                                    _submitJob();
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.ember,
-                                    foregroundColor: Colors.white,
-                                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8.r),
+                                    IconButton(
+                                      icon: Icon(Icons.close_rounded, color: AppColors.slate, size: 18.r),
+                                      visualDensity: VisualDensity.compact,
+                                      onPressed: () => _controller.resetState(),
                                     ),
-                                  ),
-                                  child: Text(
-                                    'Try Again',
-                                    style: AppTextStyles.caption(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
+                                  ],
+                                ),
+                                SizedBox(height: 6.h),
+                                Text(
+                                  state.errorMessage!,
+                                  style: AppTextStyles.bodySmall(color: AppColors.bone),
+                                ),
+                                SizedBox(height: 12.h),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    if (state.errorMessage!.toLowerCase().contains('credit') ||
+                                        state.errorMessage!.toLowerCase().contains('balance')) ...[
+                                      TextButton(
+                                        onPressed: () {
+                                          _controller.resetState();
+                                          Get.toNamed(AppRoutes.homeShell);
+                                        },
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: AppColors.statusWarning,
+                                        ),
+                                        child: const Text('Top Up Balance'),
+                                      ),
+                                      SizedBox(width: 8.w),
+                                    ],
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        HapticFeedback.lightImpact();
+                                        _controller.resetState();
+                                        _submitJob();
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.ember,
+                                        foregroundColor: Colors.white,
+                                        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8.r),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Try Again',
+                                        style: AppTextStyles.caption(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
+                          ),
+                        ],
+
+                        // Submit Action Button
+                        AppButton(
+                          label: isProcessing
+                              ? 'Processing Face Swap...'
+                              : 'Swap Face & Generate Video (${state.requiredCredits} Credits)',
+                          isLoading: isProcessing,
+                          onPressed: canSubmit ? _submitJob : null,
                         ),
-                      ),
-                    ],
 
-                    // Submit Action Button
-                    AppButton(
-                      label: 'Swap Face & Generate Video (${state.requiredCredits} Credits)',
-                      isLoading: isProcessing,
-                      onPressed: canSubmit ? _submitJob : null,
+                        SizedBox(height: 28.h),
+
+                        // 3. Recent Face Swaps History Section
+                        RecentFaceSwapsList(
+                          onSwapAnother: () => _controller.setSourceFaceImage(null),
+                        ),
+
+                        SizedBox(height: 32.h),
+                      ],
                     ),
+                  ),
+                ),
+              );
+            }),
 
-                    SizedBox(height: 28.h),
-
-                    // 3. Recent Face Swaps History Section
-                    RecentFaceSwapsList(
-                      onSwapAnother: () => _controller.setSourceFaceImage(null),
-                    ),
-
-                    SizedBox(height: 32.h),
-                  ],
-                );
-              }),
-            ),
-
-            // Live Progress Overlay
+            // Live Progress Overlay — Shows with ZERO time gap
             Obx(() {
               final state = _controller.state.value;
-
-              if (state.status == FaceSwapStatus.submitting ||
+              final isProcessing = (_isLocallySubmitting && state.status != FaceSwapStatus.error) ||
+                  state.status == FaceSwapStatus.submitting ||
                   state.status == FaceSwapStatus.uploadingAssets ||
                   state.status == FaceSwapStatus.checkingCredits ||
-                  state.status == FaceSwapStatus.processing) {
+                  state.status == FaceSwapStatus.processing;
+
+              if (isProcessing && state.status != FaceSwapStatus.error) {
                 return FaceSwapProgressOverlay(
                   stageMessage: state.activeStageMessage ?? 'Processing face swap video...',
-                  progressPercent: state.progressPercent,
+                  progressPercent: state.progressPercent > 0 ? state.progressPercent : 0.05,
                 );
               }
 

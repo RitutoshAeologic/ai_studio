@@ -11,6 +11,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/preset_themes.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/image_upload_service.dart';
+import '../../../core/utils/image_crop_helper.dart';
 import '../../../core/utils/image_validator.dart';
 import '../../../core/widgets/aperture_indicator.dart';
 import '../../../core/widgets/app_button.dart';
@@ -41,6 +42,7 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
   File? _selectedImageFile;
   String? _uploadedImageUrl;
   bool _isUploadingImage = false;
+  bool _isLocallySubmitting = false;
 
   @override
   void dispose() {
@@ -48,7 +50,8 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
     super.dispose();
   }
 
-  void _selectMode(JobType type) {
+  void _selectMode(JobType type, bool isBusy) {
+    if (isBusy) return;
     if (type == JobType.videoFaceSwap) {
       Get.toNamed(AppRoutes.faceSwap);
       return;
@@ -70,7 +73,8 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
     });
   }
 
-  void _selectTheme(int themeId) {
+  void _selectTheme(int themeId, bool isBusy) {
+    if (isBusy) return;
     setState(() {
       if (_selectedThemeId == themeId) {
         _selectedThemeId = null;
@@ -82,20 +86,23 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
     });
   }
 
-  void _resetThemeSelection() {
+  void _resetThemeSelection(bool isBusy) {
+    if (isBusy) return;
     setState(() {
       _selectedThemeId = null;
     });
   }
 
-  void _switchToCustomPrompt() {
+  void _switchToCustomPrompt(bool isBusy) {
+    if (isBusy) return;
     setState(() {
       _isUsingCustomPrompt = true;
       _selectedThemeId = null;
     });
   }
 
-  void _switchToPresetGrid() {
+  void _switchToPresetGrid(bool isBusy) {
+    if (isBusy) return;
     setState(() {
       _isUsingCustomPrompt = false;
       if (_selectedThemeId == null && PresetThemes.list.isNotEmpty) {
@@ -105,8 +112,14 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
   }
 
   Future<void> _pickInputImage(ImageSource source) async {
+    if (_isUploadingImage || _isLocallySubmitting) return;
+
     final xFile = await _imageUploadService.pickImage(source);
     if (xFile == null) return;
+
+    // 1. Crop image with themed cropper UI
+    final croppedPath = await ImageCropHelper.cropImage(sourcePath: xFile.path);
+    if (croppedPath == null) return; // User cancelled cropping
 
     final featureTarget = _selectedJobType == JobType.meshGen
         ? AiFeatureTarget.imageTo3d
@@ -116,8 +129,9 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
                 ? AiFeatureTarget.themeChange
                 : AiFeatureTarget.generalAi;
 
+    // 2. Validate cropped image
     final validation = await ImageValidator.validateImage(
-      filePath: xFile.path,
+      filePath: croppedPath,
       featureTarget: featureTarget,
       imageSource: source,
     );
@@ -138,7 +152,7 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
       return;
     }
 
-    final file = File(xFile.path);
+    final file = File(croppedPath);
     setState(() {
       _selectedImageFile = file;
       _isUploadingImage = true;
@@ -154,14 +168,16 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
 
     result.fold(
       (uploadResult) {
-        setState(() {
-          _uploadedImageUrl = uploadResult.downloadUrl;
-          _isUploadingImage = false;
-        });
+        if (mounted) {
+          setState(() {
+            _uploadedImageUrl = uploadResult.downloadUrl;
+            _isUploadingImage = false;
+          });
+        }
       },
       (failure) {
-        setState(() => _isUploadingImage = false);
         if (mounted) {
+          setState(() => _isUploadingImage = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -177,6 +193,7 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
   }
 
   void _clearSelectedImage() {
+    if (_isUploadingImage || _isLocallySubmitting) return;
     setState(() {
       _selectedImageFile = null;
       _uploadedImageUrl = null;
@@ -239,9 +256,35 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
       params: params,
     );
 
-    final jobId = await jobCtrl.submitJob(request);
-    if (jobId != null) {
-      jobCtrl.watchJob(jobId);
+    setState(() {
+      _isLocallySubmitting = true;
+    });
+
+    try {
+      final jobId = await jobCtrl.submitJob(request);
+      if (jobId != null) {
+        jobCtrl.watchJob(jobId);
+      } else {
+        final error = jobCtrl.submissionError.value;
+        if (mounted && error.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                error,
+                style: AppTextStyles.bodyMedium(color: Colors.white),
+              ),
+              backgroundColor: AppColors.statusError,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLocallySubmitting = false;
+        });
+      }
     }
   }
 
@@ -254,257 +297,282 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
       body: SafeArea(
         child: Stack(
           children: [
-            SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Mode Selection Bar
-                  Text(
-                    AppStrings.studioMode,
-                    style: AppTextStyles.labelSmall(color: AppColors.textMuted),
-                  ),
-                  SizedBox(height: 8.h),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _buildModeChip(
-                          JobType.imageGen,
-                          AppStrings.imageGenTab,
-                          Icons.auto_awesome_rounded,
-                        ),
-                        SizedBox(width: 8.w),
-                        _buildModeChip(
-                          JobType.meshGen,
-                          AppStrings.mesh3dTab,
-                          Icons.view_in_ar_rounded,
-                        ),
-                        SizedBox(width: 8.w),
-                        _buildModeChip(
-                          JobType.bgRemoval,
-                          AppStrings.bgRemovalTab,
-                          Icons.content_cut_rounded,
-                        ),
-                        SizedBox(width: 8.w),
-                        _buildModeChip(
-                          JobType.themeChange,
-                          AppStrings.themeChangeTab,
-                          Icons.style_rounded,
-                        ),
-                        SizedBox(width: 8.w),
-                        _buildModeChip(
-                          JobType.videoFaceSwap,
-                          'Face Swap',
-                          Icons.face_retouching_natural_rounded,
-                        ),
-                        SizedBox(width: 8.w),
-                        _buildModeChip(
-                          JobType.videoGen,
-                          'Video Gen',
-                          Icons.videocam_rounded,
-                        ),
-                      ],
-                    ),
-                  ),
+            Obx(() {
+              final status = jobCtrl.status.value;
+              final isSubmitting = jobCtrl.isSubmitting.value;
+              final isProcessing = jobCtrl.isProcessing.value;
+              final isBusy = isSubmitting ||
+                  isProcessing ||
+                  status.isActive ||
+                  _isUploadingImage ||
+                  _isLocallySubmitting;
 
-                  SizedBox(height: 24.h),
-
-                  // Image Input Picker Section
-                  if (_selectedJobType == JobType.bgRemoval ||
-                      _selectedJobType == JobType.meshGen ||
-                      _selectedJobType == JobType.themeChange ||
-                      _selectedJobType == JobType.imageGen) ...[
-                    Row(
+              return IgnorePointer(
+                ignoring: isBusy,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 180),
+                  opacity: isBusy ? 0.55 : 1.0,
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Mode Selection Bar
                         Text(
-                          AppStrings.inputImageLabel,
-                          style: AppTextStyles.labelSmall(
-                            color: AppColors.textMuted,
-                          ),
+                          AppStrings.studioMode,
+                          style: AppTextStyles.labelSmall(color: AppColors.textMuted),
                         ),
-                        if (_selectedJobType == JobType.bgRemoval ||
-                            _selectedJobType == JobType.meshGen ||
-                            _selectedJobType == JobType.themeChange)
-                          Text(
-                            AppStrings.requiredTag,
-                            style: AppTextStyles.labelSmall(
-                              color: AppColors.primaryAction,
-                            ),
-                          ),
-                      ],
-                    ),
-                    SizedBox(height: 8.h),
-                    _buildImagePickerBox(),
-                    SizedBox(height: 24.h),
-                  ],
-
-                  // Prompt & Theme Section for Image Gen & Theme Change
-                  if (_selectedJobType == JobType.imageGen ||
-                      _selectedJobType == JobType.themeChange) ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          AppStrings.promptAndThemeLabel,
-                          style: AppTextStyles.labelSmall(
-                            color: AppColors.textMuted,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            GestureDetector(
-                              onTap: _switchToCustomPrompt,
-                              child: Text(
-                                AppStrings.customPromptTab,
-                                style: AppTextStyles.labelSmall(
-                                  color: _isUsingCustomPrompt
-                                      ? AppColors.primaryAction
-                                      : AppColors.textMuted,
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 12.w),
-                            GestureDetector(
-                              onTap: _switchToPresetGrid,
-                              child: Text(
-                                AppStrings.presetGridTab,
-                                style: AppTextStyles.labelSmall(
-                                  color: !_isUsingCustomPrompt
-                                      ? AppColors.primaryAction
-                                      : AppColors.textMuted,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8.h),
-
-                    if (_isUsingCustomPrompt) ...[
-                      // Custom Prompt Input
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceInput,
-                          borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(
-                            color: AppColors.borderSubtle,
-                            width: 1.r,
-                          ),
-                        ),
-                        child: TextField(
-                          controller: _promptCtrl,
-                          maxLines: 4,
-                          style: AppTextStyles.bodyM(
-                            color: AppColors.textPrimary,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: AppStrings.genPromptHint,
-                            hintStyle: AppTextStyles.bodyM(
-                              color: AppColors.textDisabled,
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.all(14.r),
-                          ),
-                        ),
-                      ),
-                    ] else ...[
-                      _buildPresetGrid(),
-                    ],
-                  ],
-
-                  // Preset Grid Section for 3D Mesh Mode
-                  if (_selectedJobType == JobType.meshGen) ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          AppStrings.presetGridTab.toUpperCase(),
-                          style: AppTextStyles.labelSmall(
-                            color: AppColors.textMuted,
-                          ),
-                        ),
-                        if (_selectedThemeId != null)
-                          GestureDetector(
-                            onTap: _resetThemeSelection,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.restart_alt_rounded,
-                                  size: 14.r,
-                                  color: AppColors.ember,
-                                ),
-                                SizedBox(width: 4.w),
-                                Text(
-                                  AppStrings.resetSelection,
-                                  style: AppTextStyles.labelSmall(
-                                    color: AppColors.ember,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                    SizedBox(height: 8.h),
-                    _buildPresetGrid(),
-                  ],
-
-                  SizedBox(height: 32.h),
-
-                  // Generate Action Button
-                  Obx(() {
-                    final cost = jobCtrl.lastJobCost.value;
-                    final isBusy = jobCtrl.isSubmitting.value ||
-                        jobCtrl.isProcessing.value ||
-                        _isUploadingImage;
-
-                    return Column(
-                      children: [
-                        AppButton(
-                          label: _isUploadingImage
-                              ? AppStrings.uploadingImageEllipsis
-                              : AppStrings.generateCreation,
-                          isLoading: isBusy,
-                          onPressed: isBusy ? null : _submitJob,
-                        ),
-                        if (cost > 0) ...[
-                          SizedBox(height: 8.h),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                        SizedBox(height: 8.h),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
                             children: [
-                              Icon(
-                                Icons.bolt_rounded,
-                                size: 14.r,
-                                color: AppColors.creditGoldIcon,
+                              _buildModeChip(
+                                JobType.imageGen,
+                                AppStrings.imageGenTab,
+                                Icons.auto_awesome_rounded,
+                                isBusy,
                               ),
-                              SizedBox(width: 4.w),
-                              Text(
-                                '${AppStrings.estimatedCostPrefix}$cost${AppStrings.estimatedCostSuffix}',
-                                style: AppTextStyles.bodySmall(
-                                  color: AppColors.textMuted,
-                                ),
+                              SizedBox(width: 8.w),
+                              _buildModeChip(
+                                JobType.meshGen,
+                                AppStrings.mesh3dTab,
+                                Icons.view_in_ar_rounded,
+                                isBusy,
+                              ),
+                              SizedBox(width: 8.w),
+                              _buildModeChip(
+                                JobType.bgRemoval,
+                                AppStrings.bgRemovalTab,
+                                Icons.content_cut_rounded,
+                                isBusy,
+                              ),
+                              SizedBox(width: 8.w),
+                              _buildModeChip(
+                                JobType.themeChange,
+                                AppStrings.themeChangeTab,
+                                Icons.style_rounded,
+                                isBusy,
+                              ),
+                              SizedBox(width: 8.w),
+                              _buildModeChip(
+                                JobType.videoFaceSwap,
+                                'Face Swap',
+                                Icons.face_retouching_natural_rounded,
+                                isBusy,
+                              ),
+                              SizedBox(width: 8.w),
+                              _buildModeChip(
+                                JobType.videoGen,
+                                'Video Gen',
+                                Icons.videocam_rounded,
+                                isBusy,
                               ),
                             ],
                           ),
+                        ),
+
+                        SizedBox(height: 24.h),
+
+                        // Image Input Picker Section
+                        if (_selectedJobType == JobType.bgRemoval ||
+                            _selectedJobType == JobType.meshGen ||
+                            _selectedJobType == JobType.themeChange ||
+                            _selectedJobType == JobType.imageGen) ...[
+                          Row(
+                            children: [
+                              Text(
+                                AppStrings.inputImageLabel,
+                                style: AppTextStyles.labelSmall(
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                              if (_selectedJobType == JobType.bgRemoval ||
+                                  _selectedJobType == JobType.meshGen ||
+                                  _selectedJobType == JobType.themeChange)
+                                Text(
+                                  AppStrings.requiredTag,
+                                  style: AppTextStyles.labelSmall(
+                                    color: AppColors.primaryAction,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          SizedBox(height: 8.h),
+                          _buildImagePickerBox(isBusy),
+                          SizedBox(height: 24.h),
                         ],
+
+                        // Prompt & Theme Section for Image Gen & Theme Change
+                        if (_selectedJobType == JobType.imageGen ||
+                            _selectedJobType == JobType.themeChange) ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                AppStrings.promptAndThemeLabel,
+                                style: AppTextStyles.labelSmall(
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  GestureDetector(
+                                    onTap: () => _switchToCustomPrompt(isBusy),
+                                    child: Text(
+                                      AppStrings.customPromptTab,
+                                      style: AppTextStyles.labelSmall(
+                                        color: _isUsingCustomPrompt
+                                            ? AppColors.primaryAction
+                                            : AppColors.textMuted,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 12.w),
+                                  GestureDetector(
+                                    onTap: () => _switchToPresetGrid(isBusy),
+                                    child: Text(
+                                      AppStrings.presetGridTab,
+                                      style: AppTextStyles.labelSmall(
+                                        color: !_isUsingCustomPrompt
+                                            ? AppColors.primaryAction
+                                            : AppColors.textMuted,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8.h),
+
+                          if (_isUsingCustomPrompt) ...[
+                            // Custom Prompt Input
+                            Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceInput,
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(
+                                  color: AppColors.borderSubtle,
+                                  width: 1.r,
+                                ),
+                              ),
+                              child: TextField(
+                                controller: _promptCtrl,
+                                enabled: !isBusy,
+                                maxLines: 4,
+                                style: AppTextStyles.bodyM(
+                                  color: AppColors.textPrimary,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: AppStrings.genPromptHint,
+                                  hintStyle: AppTextStyles.bodyM(
+                                    color: AppColors.textDisabled,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.all(14.r),
+                                ),
+                              ),
+                            ),
+                          ] else ...[
+                            _buildPresetGrid(isBusy),
+                          ],
+                        ],
+
+                        // Preset Grid Section for 3D Mesh Mode
+                        if (_selectedJobType == JobType.meshGen) ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                AppStrings.presetGridTab.toUpperCase(),
+                                style: AppTextStyles.labelSmall(
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                              if (_selectedThemeId != null)
+                                GestureDetector(
+                                  onTap: () => _resetThemeSelection(isBusy),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.restart_alt_rounded,
+                                        size: 14.r,
+                                        color: AppColors.ember,
+                                      ),
+                                      SizedBox(width: 4.w),
+                                      Text(
+                                        AppStrings.resetSelection,
+                                        style: AppTextStyles.labelSmall(
+                                          color: AppColors.ember,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                          SizedBox(height: 8.h),
+                          _buildPresetGrid(isBusy),
+                        ],
+
+                        SizedBox(height: 32.h),
+
+                        // Generate Action Button
+                        Column(
+                          children: [
+                            AppButton(
+                              label: _isUploadingImage
+                                  ? AppStrings.uploadingImageEllipsis
+                                  : isBusy
+                                      ? 'Processing AI Task...'
+                                      : AppStrings.generateCreation,
+                              isLoading: isBusy,
+                              onPressed: isBusy ? null : _submitJob,
+                            ),
+                            if (jobCtrl.lastJobCost.value > 0) ...[
+                              SizedBox(height: 8.h),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.bolt_rounded,
+                                    size: 14.r,
+                                    color: AppColors.creditGoldIcon,
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    '${AppStrings.estimatedCostPrefix}${jobCtrl.lastJobCost.value}${AppStrings.estimatedCostSuffix}',
+                                    style: AppTextStyles.bodySmall(
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+
+                        SizedBox(height: 32.h),
                       ],
-                    );
-                  }),
+                    ),
+                  ),
+                ),
+              );
+            }),
 
-                  SizedBox(height: 32.h),
-                ],
-              ),
-            ),
-
-            // Realtime Job Status Processing Overlay
+            // Realtime Job Status Processing Overlay — Shows with ZERO time gap
             Obx(() {
               final status = jobCtrl.status.value;
-              final errorMsg = jobCtrl.jobError.value;
+              final isSubmitting = jobCtrl.isSubmitting.value;
+              final isProcessing = jobCtrl.isProcessing.value;
+              final showOverlay = isSubmitting ||
+                  isProcessing ||
+                  status.isActive ||
+                  _isLocallySubmitting;
 
-              if (status.isActive || jobCtrl.isSubmitting.value) {
+              if (showOverlay) {
                 return Container(
                   color: AppColors.bgApp.withAlpha(235),
                   child: Center(
@@ -545,6 +613,7 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
               }
 
               // Terminal Error State Notification
+              final errorMsg = jobCtrl.jobError.value;
               if (jobCtrl.isError.value && errorMsg.isNotEmpty) {
                 return Positioned(
                   bottom: 20.h,
@@ -632,11 +701,11 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
     );
   }
 
-  Widget _buildModeChip(JobType type, String label, IconData icon) {
+  Widget _buildModeChip(JobType type, String label, IconData icon, bool isBusy) {
     final isSelected = _selectedJobType == type;
 
     return GestureDetector(
-      onTap: () => _selectMode(type),
+      onTap: () => _selectMode(type, isBusy),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
@@ -673,7 +742,7 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
     );
   }
 
-  Widget _buildImagePickerBox() {
+  Widget _buildImagePickerBox(bool isBusy) {
     if (_selectedImageFile != null) {
       return Stack(
         children: [
@@ -706,23 +775,24 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
                 ),
               ),
             ),
-          Positioned(
-            top: 8.h,
-            right: 8.w,
-            child: CircleAvatar(
-              backgroundColor: AppColors.bgApp,
-              radius: 16.r,
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                icon: Icon(
-                  Icons.close_rounded,
-                  size: 16.r,
-                  color: AppColors.textPrimary,
+          if (!isBusy)
+            Positioned(
+              top: 8.h,
+              right: 8.w,
+              child: CircleAvatar(
+                backgroundColor: AppColors.bgApp,
+                radius: 16.r,
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 16.r,
+                    color: AppColors.textPrimary,
+                  ),
+                  onPressed: _clearSelectedImage,
                 ),
-                onPressed: _clearSelectedImage,
               ),
             ),
-          ),
         ],
       );
     }
@@ -739,7 +809,7 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           InkWell(
-            onTap: () => _pickInputImage(ImageSource.gallery),
+            onTap: isBusy ? null : () => _pickInputImage(ImageSource.gallery),
             borderRadius: BorderRadius.circular(8.r),
             child: Padding(
               padding: EdgeInsets.all(12.r),
@@ -769,7 +839,7 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
             color: AppColors.borderSubtle,
           ),
           InkWell(
-            onTap: () => _pickInputImage(ImageSource.camera),
+            onTap: isBusy ? null : () => _pickInputImage(ImageSource.camera),
             borderRadius: BorderRadius.circular(8.r),
             child: Padding(
               padding: EdgeInsets.all(12.r),
@@ -798,7 +868,7 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
     );
   }
 
-  Widget _buildPresetGrid() {
+  Widget _buildPresetGrid(bool isBusy) {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -814,7 +884,7 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
         final isSelected = _selectedThemeId == theme.themeId;
 
         return GestureDetector(
-          onTap: () => _selectTheme(theme.themeId),
+          onTap: () => _selectTheme(theme.themeId, isBusy),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             padding: EdgeInsets.all(10.r),
