@@ -25,6 +25,9 @@ class FaceSwapScreen extends StatefulWidget {
 
 class _FaceSwapScreenState extends State<FaceSwapScreen> {
   late final FaceSwapController _controller;
+  // Prevents VideoPlayerModal from being shown multiple times during
+  // rapid Obx rebuilds while status == FaceSwapStatus.completed.
+  bool _videoShown = false;
 
   @override
   void initState() {
@@ -277,10 +280,13 @@ class _FaceSwapScreenState extends State<FaceSwapScreen> {
               // Terminal Success State -> Automatically Show VideoPlayerModal
               if (state.status == FaceSwapStatus.completed &&
                   state.videoUrl != null &&
-                  state.videoUrl!.isNotEmpty) {
+                  state.videoUrl!.isNotEmpty &&
+                  !_videoShown) {
+                _videoShown = true;
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   final url = state.videoUrl!;
                   _controller.resetState();
+                  setState(() => _videoShown = false);
                   VideoPlayerModal.show(
                     context,
                     videoUrl: url,

@@ -3,13 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:video_player/video_player.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/services/image_upload_service.dart';
-import '../../../../core/utils/logger.dart';
-import '../../../../core/utils/storage_url_resolver.dart';
+import '../../../../core/widgets/app_network_image.dart';
 import '../../domain/models/video_template.dart';
 import 'template_preview_modal.dart';
 
@@ -269,8 +267,11 @@ class VideoTemplateSelector extends StatelessWidget {
   }
 }
 
-/// A purely visual video card with strictly clipped 20.r curves, glowing borders, and zero text clutter.
-class _TemplateVideoThumbnailCard extends StatefulWidget {
+/// A memory-efficient template card that shows a static thumbnail image
+/// instead of a live VideoPlayerController. Concurrent live video players
+/// caused OOM crashes on low-RAM devices (iPhone 8, 2 GB). Tapping the
+/// play icon opens the full TemplateVideoPreviewModal instead.
+class _TemplateVideoThumbnailCard extends StatelessWidget {
   final VideoTemplate template;
   final bool isSelected;
   final VoidCallback onTap;
@@ -284,60 +285,9 @@ class _TemplateVideoThumbnailCard extends StatefulWidget {
   });
 
   @override
-  State<_TemplateVideoThumbnailCard> createState() => _TemplateVideoThumbnailCardState();
-}
-
-class _TemplateVideoThumbnailCardState extends State<_TemplateVideoThumbnailCard> {
-  VideoPlayerController? _playerController;
-  bool _isInitialized = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initVideoThumbnail();
-  }
-
-  Future<void> _initVideoThumbnail() async {
-    try {
-      final rawUrl = widget.template.videoUrl;
-      if (rawUrl.isEmpty) return;
-
-      final resolvedUrl = await StorageUrlResolver.resolveUrl(rawUrl);
-      final target = resolvedUrl.isNotEmpty ? resolvedUrl : rawUrl;
-
-      final controller = VideoPlayerController.networkUrl(
-        Uri.parse(target),
-        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
-      );
-
-      await controller.initialize();
-      await controller.setVolume(0.0);
-      await controller.setLooping(true);
-      await controller.play();
-
-      if (mounted) {
-        setState(() {
-          _playerController = controller;
-          _isInitialized = true;
-        });
-      }
-    } catch (e) {
-      Logger.w('Template thumbnail preview init failed for ${widget.template.id}: $e');
-    }
-  }
-
-  @override
-  void dispose() {
-    _playerController?.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final isSelected = widget.isSelected;
-
     return GestureDetector(
-      onTap: widget.onTap,
+      onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: 126.w,
@@ -345,9 +295,7 @@ class _TemplateVideoThumbnailCardState extends State<_TemplateVideoThumbnailCard
           color: const Color(0xFF161922),
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(
-            color: isSelected
-                ? AppColors.ember
-                : const Color(0xFF2C3240),
+            color: isSelected ? AppColors.ember : const Color(0xFF2C3240),
             width: isSelected ? 2.5.r : 1.5.r,
           ),
           boxShadow: [
@@ -371,21 +319,11 @@ class _TemplateVideoThumbnailCardState extends State<_TemplateVideoThumbnailCard
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // 1. Live Video Frame Player or Clean Loader Fallback
-              if (_isInitialized && _playerController != null)
-                SizedBox.expand(
-                  child: FittedBox(
-                    fit: BoxFit.cover,
-                    child: SizedBox(
-                      width: _playerController!.value.size.width > 0
-                          ? _playerController!.value.size.width
-                          : 720,
-                      height: _playerController!.value.size.height > 0
-                          ? _playerController!.value.size.height
-                          : 1280,
-                      child: VideoPlayer(_playerController!),
-                    ),
-                  ),
+              // 1. Static Thumbnail Image (memory-safe, no video decode)
+              if (template.thumbnailUrl.isNotEmpty)
+                AppNetworkImage(
+                  imageUrl: template.thumbnailUrl,
+                  fit: BoxFit.cover,
                 )
               else
                 Container(
@@ -393,40 +331,26 @@ class _TemplateVideoThumbnailCardState extends State<_TemplateVideoThumbnailCard
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF1E222D),
-                        Color(0xFF13151D),
-                      ],
-                    ),
-                  ),
-                  child: Center(
-                    child: SizedBox(
-                      width: 24.r,
-                      height: 24.r,
-                      child: const CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: AppColors.ember,
-                      ),
+                      colors: [Color(0xFF1E222D), Color(0xFF13151D)],
                     ),
                   ),
                 ),
 
-              // 2. Subtle Vignette Gradient for Depth (only when initialized)
-              if (_isInitialized)
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withAlpha(50),
-                        Colors.transparent,
-                        Colors.black.withAlpha(120),
-                      ],
-                      stops: const [0.0, 0.5, 1.0],
-                    ),
+              // 2. Vignette Gradient for Depth
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withAlpha(50),
+                      Colors.transparent,
+                      Colors.black.withAlpha(140),
+                    ],
+                    stops: const [0.0, 0.5, 1.0],
                   ),
                 ),
+              ),
 
               // 3. Top-Right Selected Checkmark Badge
               if (isSelected)
@@ -440,26 +364,25 @@ class _TemplateVideoThumbnailCardState extends State<_TemplateVideoThumbnailCard
                   ),
                 ),
 
-              // 4. Center Tap-to-Preview Play Button (when video is ready)
-              if (_isInitialized)
-                Center(
-                  child: GestureDetector(
-                    onTap: widget.onPreview,
-                    child: Container(
-                      padding: EdgeInsets.all(9.r),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withAlpha(150),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withAlpha(80), width: 1.r),
-                      ),
-                      child: Icon(
-                        Icons.play_arrow_rounded,
-                        color: Colors.white,
-                        size: 22.r,
-                      ),
+              // 4. Center Play Button — opens full preview modal on tap
+              Center(
+                child: GestureDetector(
+                  onTap: onPreview,
+                  child: Container(
+                    padding: EdgeInsets.all(9.r),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withAlpha(160),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white.withAlpha(90), width: 1.r),
+                    ),
+                    child: Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 22.r,
                     ),
                   ),
                 ),
+              ),
             ],
           ),
         ),

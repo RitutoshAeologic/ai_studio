@@ -40,7 +40,17 @@ abstract class StorageUrlResolver {
       return trimmed;
     }
 
-    // 4. Try fetching signed download URL via Firebase Storage SDK (provides &token=...)
+    // 4. Short-circuit: plain non-Firebase URLs (Unsplash, CDN, etc.) are
+    //    already directly accessible — no Storage SDK call needed.
+    final isFirebaseUrl = trimmed.startsWith('gs://') ||
+        trimmed.contains('firebasestorage.googleapis.com') ||
+        trimmed.contains('storage.googleapis.com');
+    if (!isFirebaseUrl) {
+      _urlCache[trimmed] = trimmed;
+      return trimmed;
+    }
+
+    // 5. Try fetching signed download URL via Firebase Storage SDK (provides &token=...)
     final ref = parseStorageReference(trimmed);
     if (ref != null) {
       try {
@@ -61,7 +71,7 @@ abstract class StorageUrlResolver {
       }
     }
 
-    // 5. Fallback transform for storage.googleapis.com direct URLs into valid Firebase Storage download URLs
+    // 6. Fallback transform for storage.googleapis.com direct URLs into valid Firebase Storage download URLs
     if (trimmed.startsWith('https://storage.googleapis.com/')) {
       final uri = Uri.parse(trimmed);
       final pathSegments = uri.pathSegments;
@@ -131,8 +141,10 @@ abstract class StorageUrlResolver {
         }
       }
 
-      // Default fallback using standard FirebaseStorage instance refFromURL
-      return FirebaseStorage.instance.refFromURL(rawUrl);
+      // Default fallback: URL is a recognized storage domain but didn't match
+      // any known pattern — return null so the caller uses the raw URL as-is.
+      // Do NOT call refFromURL() on arbitrary URLs; it throws on non-Firebase domains.
+      return null;
     } catch (e) {
       Logger.w('Failed to parse storage reference for $rawUrl: $e');
       return null;

@@ -16,7 +16,7 @@ import '../../gallery/widgets/image_result_modal.dart';
 import '../../jobs/controllers/job_controller.dart';
 import '../../jobs/widgets/job_status_chip.dart';
 import '../../mesh/views/mesh_viewer_view.dart';
-import '../../video_generation/presentation/widgets/video_player_widget.dart';
+
 
 /// Gallery view tab displaying live history of generated assets with delete & auto-cleanup support.
 class GalleryTabView extends StatelessWidget {
