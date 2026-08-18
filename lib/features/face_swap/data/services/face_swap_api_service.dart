@@ -100,6 +100,13 @@ class FaceSwapApiService {
         }
       }
 
+      final statusCode = e.response?.statusCode;
+      if (statusCode == 502) {
+        throw Exception('Backend server is unreachable (502 Bad Gateway). Please make sure your backend is running on port 8000.');
+      } else if (statusCode == 503 || statusCode == 504) {
+        throw Exception('Backend server is temporarily unavailable ($statusCode). Please try again shortly.');
+      }
+
       String? errorMessage;
       if (detailData is List && detailData.isNotEmpty) {
         final firstItem = detailData.first;
@@ -108,8 +115,17 @@ class FaceSwapApiService {
         } else {
           errorMessage = detailData.toString();
         }
+      } else if (detailData != null && detailData is String) {
+        if (detailData.contains('<html') || detailData.contains('<!DOCTYPE')) {
+          errorMessage = 'Server returned an invalid HTML response ($statusCode).';
+        } else {
+          errorMessage = detailData;
+        }
       } else if (detailData != null) {
         errorMessage = detailData.toString();
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        errorMessage = 'Cannot connect to backend server. Please check your network and server status.';
       } else {
         errorMessage = e.message;
       }
