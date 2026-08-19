@@ -8,7 +8,9 @@ abstract class WalletRepository {
   /// Emits Result.success on every valid snapshot, Result.error on failures.
   Stream<Result<WalletEntity, Failure>> watchWallet(String userId);
 
+  /// Tops up credits for a user and logs the transaction.
+  Future<Result<void, Failure>> topUpCredits(String userId, int amount, String packName);
+
   /// [Debug only] Adds `amount` credits directly to wallets/{userId} in Firestore.
-  /// Must never be called in production builds — guarded by kDebugMode at the call site.
   Future<Result<void, Failure>> debugAddCredits(String userId, int amount);
 }

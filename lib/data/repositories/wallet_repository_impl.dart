@@ -23,12 +23,30 @@ class WalletRepositoryImpl implements WalletRepository {
           .collection('wallets')
           .doc(userId)
           .snapshots()
-          .map((snap) {
+          .asyncMap((snap) async {
         if (!snap.exists) {
-          Logger.w('Wallet document does not exist for user: $userId');
-          return const Error(
-              UnknownFailure('Wallet document not found'));
+          Logger.i('Wallet document missing for user $userId — auto-initializing wallet');
+          try {
+            await _firestore.collection('wallets').doc(userId).set({
+              'balance': 100,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+
+            await _firestore.collection('users').doc(userId).set({
+              'creditBalance': 100,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          } catch (e) {
+            Logger.w('Could not auto-create wallet doc: $e');
+          }
+
+          return Success(WalletModel(
+            userId: userId,
+            balance: 100,
+            updatedAt: DateTime.now(),
+          ));
         }
+
         final model = WalletModel.fromFirestore(snap);
         Logger.d('Wallet updated: balance=${model.balance}');
         return Success(model);
@@ -40,18 +58,44 @@ class WalletRepositoryImpl implements WalletRepository {
   }
 
   @override
-  Future<Result<void, Failure>> debugAddCredits(
-      String userId, int amount) async {
+  Future<Result<void, Failure>> topUpCredits(
+      String userId, int amount, String packName) async {
     try {
-      await _firestore.collection('wallets').doc(userId).update({
+      final batch = _firestore.batch();
+      final walletRef = _firestore.collection('wallets').doc(userId);
+      final userRef = _firestore.collection('users').doc(userId);
+      final txRef = walletRef.collection('transactions').doc();
+
+      batch.set(walletRef, {
         'balance': FieldValue.increment(amount),
         'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      batch.set(userRef, {
+        'creditBalance': FieldValue.increment(amount),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      batch.set(txRef, {
+        'id': txRef.id,
+        'type': 'top_up',
+        'title': packName,
+        'amount': amount,
+        'createdAt': FieldValue.serverTimestamp(),
       });
-      Logger.i('[DEBUG] Added $amount credits to wallet $userId');
+
+      await batch.commit();
+      Logger.i('Successfully topped up $amount credits for $userId ($packName)');
       return const Success(null);
     } catch (e, stackTrace) {
-      Logger.e('[DEBUG] Failed to add credits', e, stackTrace);
-      return const Error(UnknownFailure('Failed to add credits'));
+      Logger.e('Failed to top up credits', e, stackTrace);
+      return Error(UnknownFailure('Failed to top up credits: $e'));
     }
+  }
+
+  @override
+  Future<Result<void, Failure>> debugAddCredits(
+      String userId, int amount) async {
+    return topUpCredits(userId, amount, 'Developer Debug Credit Top-Up');
   }
 }

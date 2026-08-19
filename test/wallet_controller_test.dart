@@ -26,6 +26,11 @@ class _StubWalletRepository implements WalletRepository {
       _controller.stream;
 
   @override
+  Future<Result<void, Failure>> topUpCredits(
+      String userId, int amount, String packName) async =>
+      const Success(null);
+
+  @override
   Future<Result<void, Failure>> debugAddCredits(String userId, int amount) async =>
       const Success(null);
 

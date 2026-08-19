@@ -20,6 +20,17 @@ abstract class AppTheme {
         onSurface: AppColors.bone,
         outline: AppColors.borderSubtle,
       ),
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
+      focusColor: Colors.transparent,
+      splashFactory: NoSplash.splashFactory,
+      listTileTheme: const ListTileThemeData(
+        tileColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
+      ),
       textTheme: GoogleFonts.interTextTheme(
         ThemeData.dark().textTheme.apply(
               bodyColor: AppColors.bone,
