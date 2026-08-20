@@ -117,9 +117,15 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
     final xFile = await _imageUploadService.pickImage(source);
     if (xFile == null) return;
 
+    final cleanSource = ImageCropHelper.normalizePath(xFile.path);
+
     // 1. Crop image with themed cropper UI
-    final croppedPath = await ImageCropHelper.cropImage(sourcePath: xFile.path);
+    final croppedPath = await ImageCropHelper.cropImage(
+      sourcePath: cleanSource,
+    );
     if (croppedPath == null) return; // User cancelled cropping
+
+    final cleanCropped = ImageCropHelper.normalizePath(croppedPath);
 
     final featureTarget = _selectedJobType == JobType.meshGen
         ? AiFeatureTarget.imageTo3d
@@ -131,7 +137,7 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
 
     // 2. Validate cropped image
     final validation = await ImageValidator.validateImage(
-      filePath: croppedPath,
+      filePath: cleanCropped,
       featureTarget: featureTarget,
       imageSource: source,
     );
@@ -152,7 +158,7 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
       return;
     }
 
-    final file = File(croppedPath);
+    final file = File(cleanCropped);
     setState(() {
       _selectedImageFile = file;
       _isUploadingImage = true;

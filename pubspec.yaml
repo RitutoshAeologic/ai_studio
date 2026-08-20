@@ -61,7 +61,7 @@ dependencies:
   # Media & Picker Utilities
   cached_network_image: ^3.4.1
   image_picker: ^1.1.4
-  image_cropper: ^9.0.1
+  image_cropper: ^12.2.1
   video_player: ^2.10.1
   chewie: ^1.9.1
   image: ^4.5.3

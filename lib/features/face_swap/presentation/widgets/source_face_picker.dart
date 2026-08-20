@@ -59,15 +59,19 @@ class _SourceFacePickerState extends State<SourceFacePicker>
     final xFile = await uploadService.pickImage(source);
     if (xFile == null) return;
 
+    final cleanSource = ImageCropHelper.normalizePath(xFile.path);
+
     // 1. Crop face portrait
     final croppedPath = await ImageCropHelper.cropImage(
-      sourcePath: xFile.path,
+      sourcePath: cleanSource,
     );
     if (croppedPath == null) return; // Cancelled
 
+    final cleanCropped = ImageCropHelper.normalizePath(croppedPath);
+
     // 2. Validate face image
     final validation = await ImageValidator.validateImage(
-      filePath: croppedPath,
+      filePath: cleanCropped,
       featureTarget: AiFeatureTarget.generalAi,
       imageSource: source,
     );
@@ -88,7 +92,7 @@ class _SourceFacePickerState extends State<SourceFacePicker>
     }
 
     await HapticFeedback.mediumImpact();
-    widget.onFaceSelected(File(croppedPath));
+    widget.onFaceSelected(File(cleanCropped));
   }
 
   void _showImageSourcePicker(BuildContext context) {

@@ -50,8 +50,10 @@ class _VideoGenerationScreenState extends State<VideoGenerationScreen> {
     final xFile = await _uploadService.pickImage(source);
     if (xFile == null) return;
 
+    final cleanPath = ImageValidator.normalizePath(xFile.path);
+
     final validation = await ImageValidator.validateImage(
-      filePath: xFile.path,
+      filePath: cleanPath,
       featureTarget: AiFeatureTarget.generalAi,
       imageSource: source,
     );
@@ -71,7 +73,7 @@ class _VideoGenerationScreenState extends State<VideoGenerationScreen> {
       return;
     }
 
-    _controller.addLocalImage(File(xFile.path));
+    _controller.addLocalImage(File(cleanPath));
   }
 
   void _showImageSourcePicker() {
