@@ -60,6 +60,10 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
       Get.toNamed(AppRoutes.videoGen);
       return;
     }
+    if (type == JobType.lipSync) {
+      Get.toNamed(AppRoutes.lipSync);
+      return;
+    }
     setState(() {
       _selectedJobType = type;
       if (type == JobType.meshGen) {
@@ -366,6 +370,13 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
                                 JobType.videoGen,
                                 'Video Gen',
                                 Icons.videocam_rounded,
+                                isBusy,
+                              ),
+                              SizedBox(width: 8.w),
+                              _buildModeChip(
+                                JobType.lipSync,
+                                'Lip Sync',
+                                Icons.record_voice_over_rounded,
                                 isBusy,
                               ),
                             ],

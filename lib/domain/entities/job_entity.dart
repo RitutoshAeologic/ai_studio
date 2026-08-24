@@ -5,7 +5,8 @@ enum JobType {
   bgRemoval('BG_REMOVAL'),
   themeChange('THEME_CHANGE'),
   videoGen('VIDEO_GEN'),
-  videoFaceSwap('VIDEO_FACE_SWAP');
+  videoFaceSwap('VIDEO_FACE_SWAP'),
+  lipSync('LIP_SYNC');
 
   const JobType(this.firestoreValue);
   final String firestoreValue;
