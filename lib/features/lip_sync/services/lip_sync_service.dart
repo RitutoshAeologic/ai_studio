@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../core/services/api_service.dart';
+import '../../../core/services/api_service.dart';
 import '../models/lip_sync_model.dart';
 
 class LipSyncService {

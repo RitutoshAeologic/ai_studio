@@ -6,12 +6,12 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 
-import '../core/constants/app_colors.dart';
-import '../core/constants/app_text_styles.dart';
-import '../core/widgets/aperture_indicator.dart';
-import '../core/widgets/app_button.dart';
-import '../core/widgets/unfocus_on_tap.dart';
-import '../features/wallet/controllers/wallet_controller.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
+import '../../../core/widgets/aperture_indicator.dart';
+import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/unfocus_on_tap.dart';
+import '../../wallet/controllers/wallet_controller.dart';
 import '../models/lip_sync_model.dart';
 import '../services/lip_sync_service.dart';
 
