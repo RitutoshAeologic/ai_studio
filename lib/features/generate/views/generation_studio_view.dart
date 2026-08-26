@@ -64,6 +64,10 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
       Get.toNamed(AppRoutes.lipSync);
       return;
     }
+    if (type == JobType.interactiveInterview) {
+      Get.toNamed(AppRoutes.interviewSetup);
+      return;
+    }
     setState(() {
       _selectedJobType = type;
       if (type == JobType.meshGen) {
@@ -377,6 +381,13 @@ class _GenerationStudioViewState extends State<GenerationStudioView> {
                                 JobType.lipSync,
                                 'Lip Sync',
                                 Icons.record_voice_over_rounded,
+                                isBusy,
+                              ),
+                              SizedBox(width: 8.w),
+                              _buildModeChip(
+                                JobType.interactiveInterview,
+                                'AI Interview',
+                                Icons.smart_toy_rounded,
                                 isBusy,
                               ),
                             ],

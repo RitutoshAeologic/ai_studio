@@ -13,6 +13,7 @@ import '../../features/shell/views/home_shell_view.dart';
 import '../../features/video_generation/presentation/screens/video_generation_screen.dart';
 import '../../features/face_swap/presentation/screens/face_swap_screen.dart';
 import '../../features/lip_sync/screens/lip_sync_screen.dart';
+import '../../features/interview/views/interview_setup_view.dart';
 import '../middleware/auth_middleware.dart';
 import 'app_routes.dart';
 
@@ -82,6 +83,15 @@ abstract class AppPages {
     GetPage(
       name: AppRoutes.lipSync,
       page: () => const LipSyncScreen(),
+      middlewares: [AuthMiddleware()],
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+
+    // Interactive AI Interview Route
+    GetPage(
+      name: AppRoutes.interviewSetup,
+      page: () => const InterviewSetupView(),
       middlewares: [AuthMiddleware()],
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 250),

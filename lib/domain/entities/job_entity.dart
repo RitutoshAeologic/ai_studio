@@ -6,7 +6,8 @@ enum JobType {
   themeChange('THEME_CHANGE'),
   videoGen('VIDEO_GEN'),
   videoFaceSwap('VIDEO_FACE_SWAP'),
-  lipSync('LIP_SYNC');
+  lipSync('LIP_SYNC'),
+  interactiveInterview('INTERACTIVE_INTERVIEW');
 
   const JobType(this.firestoreValue);
   final String firestoreValue;

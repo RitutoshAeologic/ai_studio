@@ -12,6 +12,8 @@ abstract class AppRoutes {
   static const String videoGen = '/video-gen';
   static const String faceSwap = '/face-swap';
   static const String lipSync = '/lip-sync';
+  static const String interviewSetup = '/interview-setup';
+  static const String interactiveInterview = '/interactive-interview';
   static const String jobHistory = '/job-history';
 }
 
